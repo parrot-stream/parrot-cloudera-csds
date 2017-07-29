@@ -1,0 +1,80 @@
+<!-- Copyright (c) 2013 Cloudera, Inc. All rights reserved. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.parrot</groupId>
+  <artifactId>csd</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <name>The Parrot CSDs</name>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>SCHEMA_REGISTRY</module>
+    <module>KAFKA_REST</module>
+    <module>PARROT</module>
+    <module>SCHEMA_REGISTRY_UI</module>
+    <module>KAFKA_TOPICS_UI</module>
+    <module>KAFKA_METRICS_UI</module>
+    <module>KAFKA_CONNECT_UI</module>
+  </modules>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <appendAssemblyId>false</appendAssemblyId>
+          <descriptors>
+            <descriptor>assembly.xml</descriptor>
+          </descriptors>
+        </configuration>
+        </plugin>
+    </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.cloudera.enterprise</groupId>
+          <artifactId>schema-validator-maven-plugin</artifactId>
+          <version>${version.cloudera.cdh}</version>
+          <executions>
+            <execution>
+              <id>validate-schema</id>
+              <phase>test</phase>
+              <goals>
+                <goal>validate</goal>
+              </goals>
+              <configuration>
+                <sourceDirectory>src</sourceDirectory>
+                <strictMode>true</strictMode>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/content/repositories/releases/</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>cloudera-plugin</id>
+      <url>https://repository.cloudera.com/content/repositories/releases/</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <properties>
+
+    <version.cloudera.cdh>5.12.0</version.cloudera.cdh>
+
+    <version.clover>4.0.6</version.clover>
+
+  </properties>
+</project>

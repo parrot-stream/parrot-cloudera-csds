@@ -1,0 +1,57 @@
+#!/bin/bash
+
+VERSION=$1
+PARROT_SERVICE_LIST=SCHEMA_REGISTRY,KAFKA_CONNECT_UI,KAFKA_TOPICS_UI,SCHEMA_REGISTRY_UI,PARROT,KAFKA_REST
+SCRIPT_DIR=$PWD
+
+function usage {
+  echo -e "#################################################################################################################################################"
+  echo -e "  Usage:"
+  echo -e "             ./build VERSION"
+  echo -e ""
+  echo -e "  Options:\n" 
+  echo -e "             VERSION     Version of the CSD to generate (for example 1.0.0)"
+  echo -e "#################################################################################################################################################"
+}
+
+if [[ (-z "$VERSION") ]]; then
+  echo -e "\nVERSION is missing!\n"
+  usage
+  exit 1
+fi
+
+function replace {
+  sed -i "s/{{VERSION}}/${VERSION}/g" $SERVICE_DIR/src-gen/descriptor/service.sdl
+}
+
+function update_version {
+  mvn versions:set -DnewVersion=$VERSION
+  mvn versions:update-child-modules
+}
+
+function clean {
+  mvn clean
+  IFS=',' read -a splitted <<< "$PARROT_SERVICE_LIST"
+  for s in "${splitted[@]}"
+  do
+    SERVICE=${s}
+    SERVICE_DIR=$SCRIPT_DIR/$SERVICE
+    rm -rf $SERVICE_DIR/src-gen 
+  done
+}
+function build {
+  IFS=',' read -a splitted <<< "$PARROT_SERVICE_LIST"
+  for s in "${splitted[@]}"
+  do
+    SERVICE=${s}
+    SERVICE_DIR=$SCRIPT_DIR/$SERVICE
+    mkdir $SERVICE_DIR/src-gen
+    cp -r $SERVICE_DIR/src/* $SERVICE_DIR/src-gen
+    replace
+  done
+  mvn package
+}
+
+clean
+update_version
+build
