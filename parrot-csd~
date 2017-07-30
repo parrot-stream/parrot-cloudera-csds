@@ -1,0 +1,179 @@
+#!/bin/bash
+
+PARROT_SERVICE_LIST=SCHEMA_REGISTRY,KAFKA_CONNECT_UI,KAFKA_TOPICS_UI,KAFKA_METRICS_UI,SCHEMA_REGISTRY_UI,PARROT,KAFKA_REST
+SCRIPT_DIR=$PWD
+
+function version {
+  VERSION=$(cat "version" | grep csd_version)
+  set -- "$VERSION"
+  IFS="="; declare -a Array=($*)
+  CSD_VERSION=${Array[1]}
+
+  VERSION=$(cat "version" | grep parrot_version)
+  set -- "$VERSION"
+  IFS="="; declare -a Array=($*)
+  PARROT_VERSION=${Array[1]}
+
+  if [[ (-z "$CSD_VERSION") ]]; then
+    echo -e "\nCSD_VERSION is missing!\n"
+    usage
+    exit 1
+  fi
+  if [[ (-z "$PARROT_VERSION") ]]; then
+    echo -e "\nPARROT_VERSION is missing!\n"
+    usage
+    exit 1
+  fi
+}
+
+function usage {
+  echo -e "#################################################################################################################################################"
+  echo -e "  Usage:"
+  echo -e "             ./parrot-csd COMMAND [OPTIONS]"
+  echo -e ""
+  echo -e "  Commands:"
+  echo -e "     build                               Builds Parrot Cloudera CSDs"
+  echo -e "     install                             Installs Parrot Cloudera CSDs"
+  echo -e ""
+  echo -e "  Options:"
+  echo -e "     -d, --dir	Installation dir for Parrot CSDs (default is '/opt/cloudera/csd')"
+  echo -e ""
+  echo -e "#################################################################################################################################################"
+}
+
+function check_binaries {
+  command -v $1 >/dev/null 2>&1 || { echo >&2 "Parrot Cloudera CSDs generator requires '$1' but it's not installed. Please, install '$1' binaries!"; exit 1; }
+}
+
+function check_prerequisites {
+  echo -e "#####################################################################################"
+  echo -e "# PREREQUISITES:"
+  echo -e "#"
+  echo -e "#     - Maven 3.2.x"
+  echo -e "#####################################################################################"
+  echo -e "\nChecking prerequisites..."
+  check_binaries mvn
+  check_maven_version
+  echo -e "All prerequisites met!\n"
+}
+
+function check_maven_version {
+  version=$(mvn -version | awk 'NR==1{print $3}' | tr -d '.')
+  echo -n "Checking for the presence of 'mvn' executable in version >= 3.2.x...: "
+  if [[ version -ge 320 ]]; then
+    mvn_path=$(type mvn)
+    mvn_path_array=( $mvn_path )
+    echo -e "Found 'mvn' executable in '"${mvn_path_array[2]}"'"
+  else
+    echo -e "Missing 'mvn' executable in current PATH in version >= 3.2.x"
+  fi
+}
+
+function replace {
+  sed -i "s/{{CSD_VERSION}}/${CSD_VERSION}/g" $SERVICE_DIR/src-gen/descriptor/service.sdl
+  sed -i "s/{{PARROT_VERSION}}/${PARROT_VERSION}/g" $SERVICE_DIR/src-gen/descriptor/service.sdl
+}
+
+function update_version {
+  mvn versions:set -DnewVersion=$CSD_VERSION
+  mvn versions:update-child-modules
+}
+
+function clean {
+  mvn clean
+  IFS=',' read -a splitted <<< "$PARROT_SERVICE_LIST"
+  for s in "${splitted[@]}"
+  do
+    SERVICE=${s}
+    SERVICE_DIR=$SCRIPT_DIR/$SERVICE
+    rm -rf $SERVICE_DIR/src-gen 
+  done
+}
+
+function build {
+  echo -e "Building..."
+  IFS=',' read -a splitted <<< "$PARROT_SERVICE_LIST"
+  for s in "${splitted[@]}"
+  do
+    SERVICE=${s}
+    SERVICE_DIR=$SCRIPT_DIR/$SERVICE
+    mkdir $SERVICE_DIR/src-gen
+    cp -r $SERVICE_DIR/src/* $SERVICE_DIR/src-gen
+    replace
+  done
+  mvn package
+}
+
+function install {
+  if [[ (-z "$DIR") ]]; then
+    DIR="/opt/cloudera/csd"
+  fi
+  IFS=',' read -a splitted <<< "$PARROT_SERVICE_LIST"
+  for s in "${splitted[@]}"
+  do
+    SERVICE=${s}
+    SERVICE_DIR=$SCRIPT_DIR/$SERVICE
+    echo -e "Installing Parrot CSD for service '$SERVICE' to '$DIR'..."
+    sudo cp -r $SERVICE_DIR/target/*.jar $DIR
+    sudo chown cloudera-scm:cloudera-scm $DIR/$SERVICE-*.jar
+    sudo chmod 644 $DIR/$SERVICE-*.jar
+  done
+  echo -e ""
+  echo -e "##################################################################################################"
+  echo -e "# PARROT CSDs SUCCESFULLY INSTALLED IN '$DIR'!"
+  echo -e "#"
+  echo -e "# To add the Parrot services to the Cloudera cluster you have to:"
+  echo -e "#"
+  echo -e "#    - restart the Cloudera Manager Server with the command:"
+  echo -e "#"
+  echo -e "#             sudo service cloudera-scm-server restart"
+  echo -e "#"
+  echo -e "#    - restart the Cloudera Management Service in the Cloudera Admin Console"
+  echo -e "#    - adding the new services in the Cloudera Admin Console with 'Add Service'"
+  echo -e "#"
+  echo -e "# You can find more detailed instructions on the Cloudera Add-on Services documentation at:"
+  echo -e "#"
+  echo -e "#    https://www.cloudera.com/documentation/enterprise/5-11-x/topics/cm_mc_addon_services.html"
+  echo -e "##################################################################################################"
+  echo -e ""
+}
+
+function check_command {
+  for i in "$@"
+  do
+  case $i in
+	build*|install*)
+    COMMAND=$i
+    shift
+    ;;
+    -d*|--dir*)
+    set -- "$i" 
+    IFS="="; declare -a Array=($*)
+    DIR=${Array[1]}
+    shift
+    ;;
+  esac
+  done
+echo $COMMAND
+  if [[ (-z "$COMMAND") ]]; then
+    usage
+    exit 0
+  fi
+}
+
+########################################################################
+# BODY
+########################################################################
+version
+check_command $@
+check_prerequisites
+
+if [[ $COMMAND = "build" ]]; then
+  clean
+  update_version
+  build
+fi
+
+if [[ $COMMAND = "install" ]]; then
+  install
+fi

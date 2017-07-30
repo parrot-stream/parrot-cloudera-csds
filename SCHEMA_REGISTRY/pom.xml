@@ -14,7 +14,7 @@
   <name>The Confluent Schema Registry CSD</name>
   <packaging>pom</packaging>
 
-<profiles>
+  <profiles>
     <profile>
       <id>clover</id>
       <build>
@@ -63,6 +63,9 @@
         <executions>
           <execution>
             <id>validate-schema</id>
+            <configuration>
+              <addValidServiceTypes>KAFKA</addValidServiceTypes>
+            </configuration>
           </execution>
         </executions>
       </plugin>

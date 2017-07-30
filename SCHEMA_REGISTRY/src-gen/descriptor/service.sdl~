@@ -574,7 +574,7 @@
           "PORT": "${port}",
           "SSL_PORT": "${ssl.port}",
           "SSL_ENABLED": "${ssl_enabled}",
-          "SSL_KEY_PASSWORD": "${ssl.key.password}",
+          "SSL_KEY_PASSWORD": "${ssl_server_key_password}",
           "SSL_KEYSTORE_LOCATION": "${ssl_server_keystore_location}",
           "SSL_KEYSTORE_PASSWORD": "${ssl_server_keystore_password}",
           "SSL_TRUSTSTORE_LOCATION": "${ssl_client_truststore_location}",

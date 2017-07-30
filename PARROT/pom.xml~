@@ -11,7 +11,7 @@
   <groupId>io.parrot.csd</groupId>
   <artifactId>PARROT</artifactId>
   <version>1.0.0</version>
-  <name>The Parrot Kafka Connect Distribution CSD</name>
+  <name>The Parrot Connect Distribution CSD</name>
   <packaging>pom</packaging>
 
   <profiles>

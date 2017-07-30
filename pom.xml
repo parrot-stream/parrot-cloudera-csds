@@ -6,7 +6,7 @@
   <groupId>io.parrot</groupId>
   <artifactId>csd</artifactId>
   <version>1.0.0</version>
-  <name>The Parrot CSDs</name>
+  <name>The Parrot Distribution CSDs</name>
   <packaging>pom</packaging>
 
   <modules>
@@ -20,6 +20,7 @@
   </modules>
 
   <build>
+    <sourceDirectory>${project.basedir}/src-gen</sourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

@@ -1,7 +1,7 @@
 {
   "name": "SCHEMA_REGISTRY",
   "label": "Schema Registry",
-  "description": "This is the Parrot distribution of the Confluent Schema Registry, which provides a serving layer for your metadata. Confluent Schema Registry provides a RESTful interface for storing and retrieving Avro schemas. It stores a versioned history of all schemas, provides multiple compatibility settings and allows evolution of schemas according to the configured compatibility setting. It provides serializers that plug into Kafka clients that handle schema storage and retrieval for Kafka messages that are sent in the Avro format. <span class=\"error\">Before adding this service, ensure that the Parrot Schema Registry parcel is activated.</span>",
+  "description": "This is the Parrot distribution of the Confluent Schema Registry. The Confluent Schema Registry provides a RESTful interface for storing and retrieving Avro schemas. It stores a versioned history of all schemas, provides multiple compatibility settings and allows evolution of schemas according to the configured compatibility setting. It provides serializers that plug into Kafka clients that handle schema storage and retrieval for Kafka messages that are sent in the Avro format. <span class=\"error\">Before adding this service, ensure that the Parrot parcel of the Confluent Schema Registry is activated.</span>",
   "version": "1.0.0",
   "compatibility": {
     "generation": 1,
@@ -15,9 +15,9 @@
     "group": "parrot",
     "principal": "parrot"
   },
-  "icon": "images/kafka.png",
+  "icon": "images/parrot.png",
   "parcel": {
-    "repoUrl": "https://matteocapitanio.com/parrot/schema-registry/parcels/latest/",
+    "repoUrl": "http://matteocapitanio.com/parrot/SCHEMA_REGISTRY/parcels/0.1.0/",
     "requiredTags": [
       "schema-registry",
       "kafka"
@@ -27,23 +27,36 @@
     {
       "name": "ZOOKEEPER",
       "required": "true"
+    },
+    {
+      "name": "KAFKA",
+      "required": "true"
     }
   ],
   "inExpressWizard": true,
   "parameters": [
     {
       "name": "port",
-      "label": "TCP Port",
-      "description": "Schema Registry port",
+      "label": "Port",
+      "description": "Port to listen on for new connections.",
+      "required": true,
       "type": "port",
       "default": 8081,
       "configurableInWizard": true
     },
     {
-      "name": "avro_compatibility_level",
-      "label": "Avro compatibility type",
+      "name": "ssl.port",
+      "label": "SSL Port",
+      "description": "Port to listen on for new connections when SSL is enabled.",
+      "required": true,
+      "type": "port",
+      "default": 8443,
+      "configurableInWizard": true
+    },
+    {
+      "name": "avro.compatibility.level",
+      "label": "Avro Compatibility Type",
       "description": "The Avro compatibility type. Valid values are: none (new schema can be any valid Avro schema), backward (new schema can read data produced by latest registered schema), backward_transitive (new schema can read data produced by all previously registered schemas), forward (latest registered schema can read data produced by the new schema), forward_transitive (all previously registered schemas can read data produced by the new schema), full (new schema is backward and forward compatible with latest registered schema), transitive_full (new schema is backward and forward compatible with all previously registered schemas)",
-      "configName": "avro.compatibility.level",
       "required": false,
       "type": "string_enum",
       "validValues": [
@@ -55,6 +68,493 @@
         "full",
         "transitive_full"],
       "default": "backward",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.key.password",
+      "label": "Kafkastore SSL Key Password",
+      "description": "The password of the key contained in the keystore.",
+      "required": false,
+      "type": "password",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.keystore.location",
+      "label": "Kafkastore SSL Keystore Location",
+      "description": "The location of the SSL keystore file.",
+      "required": false,
+      "type": "path",
+      "pathType": "localDataFile",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.keystore.password",
+      "label": "Kafkastore SSL Keystore Password",
+      "description": "The password to access the keystore.",
+      "required": false,
+      "type": "password",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.truststore.location",
+      "label": "Kafkastore SSL Truststore Location",
+      "description": "The location of the SSL trust store file.",
+      "required": false,
+      "type": "path",
+      "pathType": "localDataFile",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.truststore.password",
+      "label": "Kafkastore SSL Truststore Password",
+      "description": "The password to access the trust store.",
+      "required": false,
+      "type": "password",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.topic",
+      "label": "Kafkastore Topic",
+      "description": "The durable single partition topic that acts as the durable log for the data. This topic must be compacted to avoid losing data due to retention policy.",
+      "required": false,
+      "type": "string",
+      "conformRegex": "^_[a-zA-Z_]+$",
+      "default": "_schemas",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.topic.replication.factor",
+      "label": "Kafkastore Topic Replication Factor",
+      "description": "The desired replication factor of the schema topic. The actual replication factor will be the smaller of this value and the number of live Kafka brokers.",
+      "required": false,
+      "type": "long",
+      "default": 3,
+      "configurableInWizard": true
+    },
+    {
+      "name": "response.mediatype.default",
+      "label": "Response Mediatype Default",
+      "description": "The default response media type that should be used if no specify types are requested in an Accept header.",
+      "required": false,
+      "type": "long",
+      "default": "3",
+      "configurableInWizard": true
+    },
+    {
+      "name": "response.mediatype.preferred",
+      "label": "Response Mediatype Preferred",
+      "description": "An ordered list of the server’s preferred media types used for responses, from most preferred to least.",
+      "required": false,
+      "type": "string_array",
+      "default": [
+        "application/vnd.schemaregistry.v1+json",
+        "application/vnd.schemaregistry+json, application/json"
+        ],
+      "configurableInWizard": true
+    },
+    {
+      "name": "zookeeper.set.acl",
+      "label": "Zookeeper Set ACL",
+      "description": "Whether or not to set an ACL in ZooKeeper when znodes are created and ZooKeeper SASL authentication is configured. IMPORTANT: if set to true, the ZooKeeper SASL principal must be the same as the Kafka brokers.",
+      "required": false,
+      "type": "boolean",
+      "default": false,
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.init.timeout.ms",
+      "label": "Kafkastore Init Timeout",
+      "description": "The timeout for initialization of the Kafka store, including creation of the Kafka topic that stores schema data.",
+      "required": false,
+      "type": "long",
+      "default": 60000,
+      "unit": "milliseconds",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.security.protocol",
+      "label": "Zookeeper Set ACL",
+      "description": "The security protocol to use when connecting with Kafka, the underlying persistent storage. Values can be PLAINTEXT or SSL.",
+      "required": false,
+      "type": "string_enum",
+      "validValues": [
+        "PLAINTEXT",
+        "SSL"
+        ],
+      "default": "PLAINTEXT",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.enabled.protocols",
+      "label": "Kafkastore SSL Enabled Protocols",
+      "description": "Protocols enabled for SSL connections.",
+      "required": false,
+      "type": "string",
+      "default": "TLSv1.2,TLSv1.1,TLSv1",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.keystore.type",
+      "label": "Kafkastore SSL Keystore Type",
+      "description": "The file format of the keystore.",
+      "required": false,
+      "type": "string",
+      "default": "JKS",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.protocol",
+      "label": "Kafkastore SSL Protocol",
+      "description": "The SSL protocol used.",
+      "required": false,
+      "type": "string",
+      "default": "TLS",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.provider",
+      "label": "Kafkastore SSL Provider",
+      "description": "The name of the security provider used for SSL.",
+      "required": false,
+      "type": "string",
+      "default": "TLS",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.truststore.type",
+      "label": "Kafkastore SSL Truststore Type",
+      "description": "The file format of the trust store.",
+      "required": false,
+      "type": "string",
+      "default": "JKS",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.timeout.ms",
+      "label": "Kafkastore Timeout",
+      "description": "The timeout for an operation on the Kafka store.",
+      "required": false,
+      "type": "long",
+      "default": 50,
+      "unit": "milliseconds",
+      "configurableInWizard": true
+    },
+    {
+      "name": "master.eligibility",
+      "label": "Master Eligibility",
+      "description": "If true, this node can participate in master election. In a multi-colo setup, turn this off for clusters in the slave data center.",
+      "required": false,
+      "type": "boolean",
+      "default": true,
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.sasl.kerberos.service.name",
+      "label": "Kafkastore SASL Kerberos Service Name",
+      "description": "The Kerberos principal name that the Kafka client runs as. This can be defined either in the JAAS config file or here.",
+      "required": false,
+      "type": "string",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.sasl.mechanism",
+      "label": "Kafkastore SASL Mechanism",
+      "description": "The SASL mechanism used for Kafka connections. GSSAPI is the default.",
+      "required": false,
+      "type": "string",
+      "default": "GSSAPI",
+      "configurableInWizard": true
+    },
+    {
+      "name": "access.control.allow.methods",
+      "label": "Access Control Allow Methods",
+      "description": "Set value to Jetty Access-Control-Allow-Origin header for specified methods.",
+      "required": false,
+      "type": "string",
+      "default": "GSSAPI",
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.key.password",
+      "label": "SSL Key Password",
+      "description": "Used for HTTPS. The password of the private key in the keystore file.",
+      "required": false,
+      "type": "password",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.keystore.type",
+      "label": "Access Control Allow Methods",
+      "description": "Used for HTTPS. The type of keystore file.",
+      "required": false,
+      "type": "string",
+      "default": "JKS",
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.truststore.type",
+      "label": "SSL Truststore Type",
+      "description": "Used for HTTPS. The type of trust store file.",
+      "required": false,
+      "type": "string",
+      "default": "JKS",
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.protocol",
+      "label": "SSL Protocol",
+      "description": "Used for HTTPS. The SSL protocol used to generate the SslContextFactory.",
+      "required": false,
+      "type": "string",
+      "default": "TLS",
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.provider",
+      "label": "SSL Provider",
+      "description": "Used for HTTPS. The SSL security provider name. Leave blank to use Jetty’s default.",
+      "required": false,
+      "type": "string",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.client.auth",
+      "label": "SSL Client Auth",
+      "description": "Used for HTTPS. Whether or not to require the HTTPS client to authenticate via the server’s trust store.",
+      "required": false,
+      "type": "boolean",
+      "default": false,
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.enabled.protocols",
+      "label": "SSL Enabled Protocols",
+      "description": "Used for HTTPS. The list of protocols enabled for SSL connections. Comma-separated list. Leave blank to use Jetty’s defaults.",
+      "required": false,
+      "type": "string_array",
+      "default": [],
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.bootstrap.servers",
+      "label": "Kafkastore Bootstrap Servers",
+      "description": "A list of Kafka brokers to connect to. For example,  PLAINTEXT://hostname:9092,SSL://hostname2:9092. If this configuration is not specified, the Schema Registry’s internal Kafka clients will get their Kafka bootstrap server list from ZooKeeper (configured with kafkastore.connection.url). Note that if kafkastore.bootstrap.servers is configured, kafkastore.connection.url still needs to be configured, too. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in ZooKeeper, but the Schema Registry may need to be configured with just one of those endpoints.",
+      "required": false,
+      "type": "string_array",
+      "default": [],
+      "configurableInWizard": true
+    },
+    {
+      "name": "access.control.allow.origin",
+      "label": "Kafkastore Bootstrap Servers",
+      "description": "Set value for Jetty Access-Control-Allow-Origin header.",
+      "required": false,
+      "type": "string",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "debug",
+      "label": "Debug",
+      "description": "Boolean indicating whether extra debugging information is generated in some error response entities.",
+      "required": false,
+      "type": "boolean",
+      "default": false,
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.cipher.suites",
+      "label": "Kafkastore SSL Cipher Suites",
+      "description": "A list of cipher suites used for SSL.",
+      "required": false,
+      "type": "string",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.endpoint.identification.algorithm",
+      "label": "Kafkastore SSL Endpoint Identification Algorithm",
+      "description": "A list of cipher suites used for SSL.",
+      "required": false,
+      "type": "string",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.keymanager.algorithm",
+      "label": "Kafkastore SSL Keymanager Algorithm",
+      "description": "The algorithm used by key manager factory for SSL connections.",
+      "required": false,
+      "type": "string",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.ssl.trustmanager.algorithm",
+      "label": "Kafkastore SSL Trustmanager Algorithm",
+      "description": "The algorithm used by the trust manager factory for SSL connections.",
+      "required": false,
+      "type": "string",
+      "default": "PKIX",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.zk.session.timeout.ms",
+      "label": "Kafkastore ZooKeeper Session Timeout",
+      "description": "The algorithm used by the trust manager factory for SSL connections.",
+      "required": false,
+      "type": "long",
+      "default": 30000,
+      "unit": "milliseconds",
+      "configurableInWizard": true
+    },
+    {
+      "name": "metric.reporters",
+      "label": "Metric Reporters",
+      "description": "A list of classes to use as metrics reporters. Implementing the <code>MetricReporter</code> interface allows plugging in classes that will be notified of new metric creation. The JmxReporter is always included to register JMX statistics.",
+      "required": false,
+      "type": "string_array",
+      "default": [],
+      "configurableInWizard": true
+    },
+    {
+      "name": "metrics.jmx.prefix",
+      "label": "Metrics JMX Prefix",
+      "description": "Prefix to apply to metric names for the default JMX reporter.",
+      "required": false,
+      "type": "string",
+      "default": "kafka.schema.registry",
+      "configurableInWizard": true
+    },
+    {
+      "name": "metrics.num.samples",
+      "label": "Metrics Number of Samples",
+      "description": "Prefix to apply to metric names for the default JMX reporter.",
+      "required": false,
+      "type": "long",
+      "default": 2,
+      "configurableInWizard": true
+    },
+    {
+      "name": "metrics.sample.window.ms",
+      "label": "Metrics Sample Window",
+      "description": "The metrics system maintains a configurable number of samples over a fixed window size. This configuration controls the size of the window. For example we might maintain two samples each measured over a 30 second period. When a window expires we erase and overwrite the oldest window.",
+      "required": false,
+      "type": "long",
+      "default": 30000,
+      "unit": "milliseconds",
+      "configurableInWizard": true
+    },
+    {
+      "name": "request.logger.name",
+      "label": "Request Logger Name",
+      "description": "Name of the SLF4J logger to write the NCSA Common Log Format request log.",
+      "required": false,
+      "type": "string",
+      "default": "io.confluent.rest-utils.requests",
+      "configurableInWizard": true
+    },
+    {
+      "name": "schema.registry.zk.namespace",
+      "label": "Schema Registry ZooKeeper Namespace",
+      "description": "The string that is used as the zookeeper namespace for storing schema registry metadata. SchemaRegistry instances which are part of the same schema registry service should have the same ZooKeeper namespace.",
+      "required": false,
+      "type": "string",
+      "default": "schema_registry",
+      "configurableInWizard": true
+    },
+    {
+      "name": "shutdown.graceful.ms",
+      "label": "Shutdown Graceful",
+      "description": "Amount of time to wait after a shutdown request for outstanding requests to complete.",
+      "required": false,
+      "type": "long",
+      "default": 1000,
+      "unit": "milliseconds",
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.keymanager.algorithm",
+      "label": "SSL Keymanager Algorithm",
+      "description": "Used for HTTPS. The algorithm used by the key manager factory for SSL connections. Leave blank to use Jetty’s default.",
+      "required": false,
+      "type": "string",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.trustmanager.algorithm",
+      "label": "SSL Trustmanager Algorithm",
+      "description": "Used for HTTPS. The algorithm used by the trust manager factory for SSL connections. Leave blank to use Jetty’s default.",
+      "required": false,
+      "type": "string",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.cipher.suites",
+      "label": "SSL Cipher Suites",
+      "description": "Used for HTTPS. A list of SSL cipher suites. Comma-separated list. Leave blank to use Jetty’s defaults.",
+      "required": false,
+      "type": "string_array",
+      "default": [],
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.endpoint.identification.algorithm",
+      "label": "SSL Endpoint Identification Algorithm",
+      "description": "Used for HTTPS. The endpoint identification algorithm to validate the server hostname using the server certificate. Leave blank to use Jetty’s default.",
+      "required": false,
+      "type": "string",
+      "default": "",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.sasl.kerberos.kinit.cmd",
+      "label": "Kafkastore SASL Kerberos Kinit Command Path",
+      "description": "The Kerberos kinit command path.",
+      "required": false,
+      "type": "path",
+      "pathType": "localDataFile",
+      "default": "/usr/bin/kinit",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.sasl.kerberos.min.time.before.relogin",
+      "label": "Kafkastore SASL Kerberos Minimum Time Before Relogin",
+      "description": "The login time between refresh attempts.",
+      "required": false,
+      "type": "long",
+      "default": 60000,
+      "unit": "milliseconds",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.sasl.kerberos.ticket.renew.jitter",
+      "label": "Kafkastore SASL Kerberos Ticket Renew Jitter",
+      "description": "The percentage of random jitter added to the renewal time.",
+      "required": false,
+      "type": "double",
+      "default": 0.05,
+      "unit": "percent",
+      "configurableInWizard": true
+    },
+    {
+      "name": "kafkastore.sasl.kerberos.ticket.renew.window.factor",
+      "label": "Kafkastore SASL Kerberos Ticket Renew Window Factor",
+      "description": "Login thread will sleep until the specified window factor of time from last refresh to ticket’s expiry has been reached, at which time it will try to renew the ticket.",
+      "required": false,
+      "type": "double",
+      "default": 0.8,
+      "unit": "percent",
       "configurableInWizard": true
     }
   ],
@@ -71,11 +571,37 @@
         ],
         "environmentVariables": {
           "HOST": "${host}",
-          "PORT": "${port}"
+          "PORT": "${port}",
+          "SSL_PORT": "${ssl.port}",
+          "SSL_ENABLED": "${ssl_enabled}",
+          "SSL_KEY_PASSWORD": "${ssl.key.password}",
+          "SSL_KEYSTORE_LOCATION": "${ssl_server_keystore_location}",
+          "SSL_KEYSTORE_PASSWORD": "${ssl_server_keystore_password}",
+          "SSL_TRUSTSTORE_LOCATION": "${ssl_client_truststore_location}",
+          "SSL_TRUSTSTORE_PASSWORD": "${ssl_client_truststore_password}"
         }
       },
       "stopRunner" : {
         "timeout" : "30000"
+      },
+      "kerberosPrincipals" : [
+        {
+          "name" : "PARROT_PRINCIPAL",
+          "primary" : "parrot",
+          "instance" : "${host}"
+        }
+      ],
+      "sslServer": {
+        "keyIdentifier" : "schema-registry",
+        "enabledConfigName" : "ssl.enabled",
+        "keystoreLocationConfigName" : "ssl.keystore.location",
+        "keystorePasswordConfigName" : "ssl.keystore.password",
+        "keyPasswordOptionality" : "required",
+        "keystoreKeyPasswordConfigName" : "ssl.key.password"
+      },
+      "sslClient": {
+        "truststoreLocationConfigName" : "ssl.truststore.location",
+        "truststorePasswordConfigName" : "ssl.truststore.password"
       },
       "logging": {
         "dir": "/var/log/schema-registry",
@@ -97,6 +623,10 @@
               {
                 "key" : "#listeners",
                 "value" : "{{LISTENERS}}"
+              },
+              {
+                "key" : "host.name",
+                "value" : "${host}"
               }
             ]
           }

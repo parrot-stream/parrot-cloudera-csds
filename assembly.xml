@@ -6,7 +6,7 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <fileSets>
       <fileSet>
-        <directory>${project.basedir}/src</directory>
+        <directory>${project.basedir}/src-gen</directory>
         <outputDirectory>/</outputDirectory>
         </fileSet>
      </fileSets>
