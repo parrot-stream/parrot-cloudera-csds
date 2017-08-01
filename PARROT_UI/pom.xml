@@ -5,16 +5,16 @@
   <parent>
     <groupId>io.parrot</groupId>
     <artifactId>csd</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
   </parent>
 
   <groupId>io.parrot.csd</groupId>
-  <artifactId>KAFKA_CONNECT_UI</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
-  <name>The Landoop Kafka Connect UI CSD</name>
-  <packaging>pom</packaging>
+  <artifactId>PARROT_UI</artifactId>
+  <version>1.0.0</version>
+  <name>The Parrot UIs CSD</name>
+  <packaging>jar</packaging>
 
-<profiles>
+  <profiles>
     <profile>
       <id>clover</id>
       <build>
@@ -36,6 +36,7 @@
   </profiles>
 
   <build>
+    <sourceDirectory>${project.build.directory}/src-gen</sourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -67,5 +68,4 @@
       </plugin>
     </plugins>
    </build>
-
 </project>
