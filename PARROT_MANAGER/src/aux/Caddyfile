@@ -1,0 +1,6 @@
+0.0.0.0:{$PORT}
+tls {{TLS_ONOFF}}
+tls {$TLS_EMAIL}
+
+root {$HOME_UI}
+log /var/log/parrot-manager/{$LOG_FILE_NAME}-{$HOST}.log

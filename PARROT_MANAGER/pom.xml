@@ -9,10 +9,10 @@
   </parent>
 
   <groupId>io.parrot.csd</groupId>
-  <artifactId>PARROT</artifactId>
+  <artifactId>PARROT_MANAGER</artifactId>
   <version>1.0.0</version>
-  <name>The Parrot Kafka Connect Distribution CSD</name>
-  <packaging>pom</packaging>
+  <name>The Parrot Manager CSD</name>
+  <packaging>jar</packaging>
 
   <profiles>
     <profile>
@@ -36,6 +36,7 @@
   </profiles>
 
   <build>
+    <sourceDirectory>${project.build.directory}/src-gen</sourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -62,10 +63,12 @@
         <executions>
           <execution>
             <id>validate-schema</id>
+            <configuration>
+              <addValidServiceTypes>KAFKA_REST,SCHEMA_REGISTRY</addValidServiceTypes>
+            </configuration>
           </execution>
         </executions>
       </plugin>
     </plugins>
    </build>
-
 </project>

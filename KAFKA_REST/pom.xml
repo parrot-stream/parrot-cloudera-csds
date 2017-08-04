@@ -36,6 +36,7 @@
   </profiles>
 
   <build>
+    <sourceDirectory>${project.build.directory}/src-gen</sourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -62,6 +63,9 @@
         <executions>
           <execution>
             <id>validate-schema</id>
+            <configuration>
+              <addValidServiceTypes>KAFKA,SCHEMA_REGISTRY</addValidServiceTypes>
+            </configuration>
           </execution>
         </executions>
       </plugin>

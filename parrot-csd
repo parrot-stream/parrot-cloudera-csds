@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PARROT_SERVICE_LIST=SCHEMA_REGISTRY,KAFKA_CONNECT_UI,KAFKA_TOPICS_UI,KAFKA_METRICS_UI,SCHEMA_REGISTRY_UI,PARROT,KAFKA_REST
+PARROT_SERVICE_LIST=SCHEMA_REGISTRY,KAFKA_REST,PARROT_MANAGER,PARROT_STREAM
 SCRIPT_DIR=$PWD
 
 function version {
@@ -32,10 +32,13 @@ function usage {
   echo -e "             ./parrot-csd COMMAND [OPTIONS]"
   echo -e ""
   echo -e "  Commands:"
-  echo -e "     build                               Builds Parrot Cloudera CSDs"
-  echo -e "     install                             Installs Parrot Cloudera CSDs"
+  echo -e ""
+  echo -e "     build           Builds Parrot Cloudera CSDs"
+  echo -e "     install         Installs Parrot Cloudera CSDs"
   echo -e ""
   echo -e "  Options:"
+  echo -e ""
+  echo -e "     -s, --service   Service Name to install"
   echo -e "     -d, --dir	Installation dir for Parrot CSDs (default is '/opt/cloudera/csd')"
   echo -e ""
   echo -e "#################################################################################################################################################"
@@ -54,7 +57,7 @@ function check_prerequisites {
   echo -e "\nChecking prerequisites..."
   check_binaries mvn
   check_maven_version
-  echo -e "All prerequisites met!\n"
+  echo -e "\nAll prerequisites met!\n"
 }
 
 function check_maven_version {
@@ -63,7 +66,7 @@ function check_maven_version {
   if [[ version -ge 320 ]]; then
     mvn_path=$(type mvn)
     mvn_path_array=( $mvn_path )
-    echo -e "Found 'mvn' executable in '"${mvn_path_array[2]}"'"
+    echo -e "Found 'mvn' executable in '"${mvn_path}"'"
   else
     echo -e "Missing 'mvn' executable in current PATH in version >= 3.2.x"
   fi
@@ -142,8 +145,14 @@ function check_command {
   for i in "$@"
   do
   case $i in
-	build*|install*)
+    build*|install*)
     COMMAND=$i
+    shift
+    ;;
+    -s*|--service*)
+    set -- "$i"
+    IFS="="; declare -a Array=($*)
+    PARROT_SERVICE_LIST=${Array[1]}
     shift
     ;;
     -d*|--dir*)
@@ -154,7 +163,7 @@ function check_command {
     ;;
   esac
   done
-echo $COMMAND
+
   if [[ (-z "$COMMAND") ]]; then
     usage
     exit 0
@@ -165,7 +174,7 @@ echo $COMMAND
 # BODY
 ########################################################################
 version
-check_command $@
+check_command "$@"
 check_prerequisites
 
 if [[ $COMMAND = "build" ]]; then

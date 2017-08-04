@@ -17,37 +17,44 @@ fi
 
 # Add Listener
 if [[ ${SSL_ENABLED} == "true" ]]; then
-    LISTENERS="https://${HOST}:${SSL_PORT}"
+    LISTENERS="https://0.0.0.0:${SSL_PORT}"
 else
-    LISTENERS="http://${HOST}:${PORT}"
+    LISTENERS="http://0.0.0.0:${PORT}"
 fi
+
+# Define log4j.properties
+LOG_DIR=/var/log/schema-registry
+SCHEMA_REGISTRY_LOG4J_OPTS="-Dlog4j.configuration=file:$CONF_DIR/log4j.properties"
+export SCHEMA_REGISTRY_LOG4J_OPTS="-Dschema-registry.log.dir=$LOG_DIR $SCHEMA_REGISTRY_LOG4J_OPTS"
+SCHEMA_REGISTRY_CONF_FILE=$CONF_DIR/schema-registry-conf/schema-registry.properties
 
 echo -e "######################################################################################"
 echo -e "# PARROT DISTRIBUTION - SCHEMA REGISTRY"
 echo -e "#-------------------------------------------------------------------------------------"
-echo -e "# DATE:                    `date`"
-echo -e "# PORT:                    $PORT"
-echo -e "# HOST:                    $HOST"
-echo -e "# PWD:                     `pwd`"
-echo -e "# CONF_DIR:                $CONF_DIR"
-echo -e "# SCHEMA_REGISTRY_HOME:    $SCHEMA_REGISTRY_HOME"
-echo -e "# SCHEMA_REGISTRY_VERSION: $SCHEMA_REGISTRY_VERSION"
-echo -e "# ZK_QUORUM:               $QUORUM"
+echo -e "# DATE:                       `date`"
+echo -e "# PORT:                       $PORT"
+echo -e "# HOST:                       $HOST"
+echo -e "# PWD:                        `pwd`"
+echo -e "# CONF_DIR:                   $CONF_DIR"
+echo -e "# CONF_FILE:                  $CONF_FILE"
+echo -e "# SCHEMA_REGISTRY_HOME:       $SCHEMA_REGISTRY_HOME"
+echo -e "# SCHEMA_REGISTRY_VERSION:    $SCHEMA_REGISTRY_VERSION"
+echo -e "# SCHEMA_REGISTRY_LOG4J_OPTS: $SCHEMA_REGISTRY_LOG4J_OPTS"
+echo -e "# ZK_QUORUM:                  $QUORUM"
 echo -e "#-------------------------------------------------------------------------------------"
-echo -e "# SSL_ENABLED:             $SSL_ENABLED"
-echo -e "# SSL_PORT:                $SSL_PORT"
-echo -e "# SSL_KEY_PASSWORD:        $SSL_KEY_PASSWORD"
-echo -e "# SSL_KEYSTORE_LOCATION:   $SSL_KEYSTORE_LOCATION"
-echo -e "# SSL_KEYSTORE_PASSWORD:   $SSL_KEYSTORE_PASSWORD"
-echo -e "# SSL_TRUSTSTORE_LOCATION: $SSL_TRUSTSTORE_LOCATION"
-echo -e "# SSL_TRUSTSTORE_PASSWORD: $SSL_TRUSTSTORE_PASSWORD"
+echo -e "# SSL_ENABLED:                $SSL_ENABLED"
+echo -e "# SSL_PORT:                   $SSL_PORT"
+echo -e "# SSL_KEYSTORE_LOCATION:      $SSL_KEYSTORE_LOCATION"
+echo -e "# SSL_KEYSTORE_PASSWORD:      $SSL_KEYSTORE_PASSWORD"
+echo -e "# SSL_TRUSTSTORE_LOCATION:    $SSL_TRUSTSTORE_LOCATION"
+echo -e "# SSL_TRUSTSTORE_PASSWORD:    $SSL_TRUSTSTORE_PASSWORD"
 echo -e "######################################################################################"
 
 # Replace kafkastore.connection.url placeholder with ZooKeeper Quorum
-perl -pi -e "s#\#kafkastore.connection.url={{QUORUM}}#kafkastore.connection.url=${QUORUM}#" $CONF_DIR/schema-registry.properties
+perl -pi -e "s#\#kafkastore.connection.url={{QUORUM}}#kafkastore.connection.url=${QUORUM}#" $SCHEMA_REGISTRY_CONF_FILE
 
 # Replace listeners placeholder with LISTENERS
-perl -pi -e "s#\#listeners={{LISTENERS}}#listeners=${LISTENERS}#" $CONF_DIR/schema-registry.properties
+perl -pi -e "s#\#listeners={{LISTENERS}}#listeners=${LISTENERS}#" $SCHEMA_REGISTRY_CONF_FILE
 
 # Run Confluent Schema Registry
-exec $SCHEMA_REGISTRY_HOME/bin/schema-registry-start $CONF_DIR/schema-registry.properties
+exec $SCHEMA_REGISTRY_HOME/bin/schema-registry-start $SCHEMA_REGISTRY_CONF_FILE

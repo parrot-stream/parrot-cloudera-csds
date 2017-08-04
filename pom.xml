@@ -12,11 +12,8 @@
   <modules>
     <module>SCHEMA_REGISTRY</module>
     <module>KAFKA_REST</module>
-    <module>PARROT</module>
-    <module>SCHEMA_REGISTRY_UI</module>
-    <module>KAFKA_TOPICS_UI</module>
-    <module>KAFKA_METRICS_UI</module>
-    <module>KAFKA_CONNECT_UI</module>
+    <module>PARROT_MANAGER</module>
+    <module>PARROT_STREAM</module>
   </modules>
 
   <build>

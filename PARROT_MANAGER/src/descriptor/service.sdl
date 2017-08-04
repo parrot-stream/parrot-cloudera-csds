@@ -1,0 +1,397 @@
+{
+  "name": "PARROT_MANAGER",
+  "label": "Parrot Manager",
+  "description": "This is the Parrot distribution of the Landoop Kafka Topics UI, Kafka Connect UI and Schema Registry UI. <span class=\"error\">Before adding this service, ensure that the Parrot parcel of the Parrot Manager is distributed and activated.</span>",
+  "version": "{{CSD_VERSION}}",
+  "compatibility": {
+    "generation": 1,
+    "cdhVersion": {
+      "min": "5",
+      "max": "5"
+    }
+  },
+  "runAs": {
+    "user": "parrot",
+    "group": "parrot",
+    "principal": "parrot"
+  },
+  "icon": "images/parrot.png",
+  "parcel": {
+    "repoUrl": "http://matteocapitanio.com/parrot/PARROT_MANAGER/parcels/{{PARROT_VERSION}}/",
+    "requiredTags": [
+      "kafka-rest",
+      "schema-registry",
+      "parrot-manager",
+      "parrot-stream"
+    ]
+  },
+  "serviceDependencies": [
+    {
+      "name": "KAFKA_REST",
+      "required": "true"
+    },
+    {
+      "name": "SCHEMA_REGISTRY",
+      "required": "true"
+    }
+  ],
+  "inExpressWizard": true,
+  "roles": [
+    {
+      "name": "KAFKA_TOPICS_UI",
+      "label": "Kafka Topics UI",
+      "pluralLabel": "Kafka Topics UIs",
+      "jvmBased": true,
+      "startRunner": {
+        "program": "scripts/control.sh",
+        "args": [
+          "start",
+          "kafka-topics-ui"
+        ],
+        "environmentVariables": {
+          "HOST": "${host}",
+          "PORT": "${port}",
+          "PROXY": "${proxy.enabled}",
+          "PROXY_SKIP_VERIFY": "${proxy.skip.verify}",
+          "MAX_BYTES": "${record.max.bytes}",
+          "RECORD_POLL_TIMEOUT": "${record.poll.timeout}",
+          "DEBUG_LOGS_ENABLED": "${debug.enabled}",
+          "SSL_ENABLED": "${ssl.enabled}",
+          "TLS_EMAIL": "${letsencrypt.certificate.email}"
+        }
+      },
+      "stopRunner" : {
+        "timeout" : "30000"
+      },
+      "externalLink" : {
+        "name" : "kafka-topics-ui",
+        "label" : "Kafka Topics UI",
+        "url" : "http://${host}:${port}",
+        "secureUrl" : "https://${host}:${ssl.port}"
+      },
+      "topology" : {
+        "minInstances" : "0",
+        "softMinInstances" : "1"
+      },
+      "kerberosPrincipals" : [
+        {
+          "name" : "PARROT_PRINCIPAL",
+          "primary" : "parrot",
+          "instance" : "${host}"
+        }
+      ],
+      "logging": {
+        "dir": "/var/log/parrot-manager",
+        "filename": "kafka-topics-ui-${host}.log",
+        "modifiable": false,
+        "loggingType": "other"
+      },
+      "configWriter": {
+          "auxConfigGenerators" : [
+            {
+              "filename" : "Caddyfile",
+              "sourceFilename" : "aux/Caddyfile"
+            }
+          ]
+      },
+      "parameters": [
+        {
+          "name": "port",
+          "label": "HTTP Port",
+          "description": "Port to listen on for new HTTP connections to Kafka Topics UI.",
+          "required": true,
+          "type": "port",
+          "default": 8001,
+          "configurableInWizard": true
+        },
+        {
+          "name": "ssl.port",
+          "label": "HTTPS Port",
+          "description": "Port to listen on for new HTTPS connections to Kafka Topics UI.",
+          "required": true,
+          "type": "port",
+          "default": 8801,
+          "configurableInWizard": true
+        },
+        {
+          "name": "proxy.enabled",
+          "label": "Proxy Enabled",
+          "description": "Enable Proxy if there is a CORS issue or a firewall to pass through. NOTE: when proxying, for the 'schema.registry.url' you have to use an IP address or a domain that can be resolved to it, avoiding using 'localhost'.",
+          "required": true,
+          "type": "boolean",
+          "default": true,
+          "configurableInWizard": true
+        },
+        {
+          "name": "proxy.skip.verify",
+          "label": "Proxy Skip Verify",
+          "description": "To instruct the proxy to not verify the backend Kafka REST Proxy TLS certificate.",
+          "required": false,
+          "type": "boolean",
+          "default": false,
+          "configurableInWizard": true
+        },
+        {
+          "name": "record.max.bytes",
+          "label": "Record Maximum Bytes",
+          "description": "Maximum size of the a polled record.",
+          "required": true,
+          "type": "long",
+          "unit": "bytes",
+          "default": 50000,
+          "configurableInWizard": true
+        },
+        {
+          "name": "record.poll.timeout",
+          "label": "Record Poll Timeout",
+          "description": "Timeout in record poll.",
+          "required": true,
+          "type": "long",
+          "unit": "milliseconds",
+          "default": 2000,
+          "configurableInWizard": true
+        },
+        {
+          "name": "debug.enabled",
+          "label": "Debug Enabled",
+          "description": "Debug in logging.",
+          "required": true,
+          "type": "boolean",
+          "default": false,
+          "configurableInWizard": true
+        },
+        {
+          "name": "ssl.enabled",
+          "label": "SSL Enabled",
+          "description": "Enable HTTPS by generating a Let's Ecrypt SSL certificate.",
+          "required": false,
+          "type": "boolean",
+          "default": false,
+          "configurableInWizard": true
+        },
+        {
+          "name": "letsencrypt.certificate.email",
+          "label": "SSL Enabled",
+          "description": "Email address to use when generating the Let'S Encrypt SSL certificate.",
+          "required": false,
+          "type": "string",
+          "default": "",
+          "configurableInWizard": true
+        }
+      ]
+    },
+    {
+      "name": "KAFKA_CONNECT_UI",
+      "label": "Kafka Connect UI",
+      "pluralLabel": "Kafka Connect UIs",
+      "jvmBased": true,
+      "startRunner": {
+        "program": "scripts/control.sh",
+        "args": [
+          "start",
+          "kafka-connect-ui"
+        ],
+        "environmentVariables": {
+          "HOST": "${host}",
+          "PORT": "${port}",
+          "SSL_ENABLED": "${ssl.enabled}",
+          "SSL_PORT": "${ssl.port}",
+          "TLS_EMAIL": "${letsencrypt.certificate.email}"
+        }
+      },
+      "stopRunner" : {
+        "timeout" : "30000"
+      },
+      "externalLink" : {
+        "name" : "kafka-connect-ui",
+        "label" : "Kafka Connect UI",
+        "url" : "http://${host}:${port}",
+        "secureUrl" : "https://${host}:${ssl.port}"
+      },
+      "topology" : {
+        "minInstances" : "0",
+        "softMinInstances" : "1"
+      },
+      "kerberosPrincipals" : [
+        {
+          "name" : "PARROT_PRINCIPAL",
+          "primary" : "parrot",
+          "instance" : "${host}"
+        }
+      ],
+      "logging": {
+        "dir": "/var/log/parrot-manager",
+        "filename": "kafka-connect-ui-${host}.log",
+        "modifiable": false,
+        "loggingType": "other"
+      },
+      "configWriter": {
+          "auxConfigGenerators" : [
+            {
+              "filename" : "Caddyfile",
+              "sourceFilename" : "aux/Caddyfile"
+            }
+          ]
+      },
+      "parameters": [
+        {
+          "name": "port",
+          "label": "HTTP Port",
+          "description": "Port to listen on for new HTTP connections to Kafka Connect UI.",
+          "required": true,
+          "type": "port",
+          "default": 8002,
+          "configurableInWizard": true
+        },
+        {
+          "name": "ssl.port",
+          "label": "HTTPS Port",
+          "description": "Port to listen on for new HTTPS connections to Kafka Connect UI.",
+          "required": true,
+          "type": "port",
+          "default": 8802,
+          "configurableInWizard": true
+        },
+        {
+          "name": "ssl.enabled",
+          "label": "SSL Enabled",
+          "description": "Enable HTTPS by generating a Let's Ecrypt SSL certificate.",
+          "required": false,
+          "type": "boolean",
+          "default": false,
+          "configurableInWizard": true
+        },
+        {
+          "name": "letsencrypt.certificate.email",
+          "label": "SSL Enabled",
+          "description": "Email address to use when generating the Let'S Encrypt SSL certificate.",
+          "required": false,
+          "type": "string",
+          "default": "",
+          "configurableInWizard": true
+        }
+      ]
+    },
+    {
+      "name": "SCHEMA_REGISTRY_UI",
+      "label": "Schema Registry UI",
+      "pluralLabel": "Schema Registry UIs",
+      "jvmBased": true,
+      "startRunner": {
+        "program": "scripts/control.sh",
+        "args": [
+          "start",
+          "schema-registry-ui"
+        ],
+        "environmentVariables": {
+          "HOST": "${host}",
+          "PORT": "${port}",
+          "PROXY": "${proxy.enabled}",
+          "ALLOW_GLOBAL": "${allow.global}",
+          "ALLOW_TRANSITIVE": "${allow.transitive}",
+          "SSL_ENABLED": "${ssl.enabled}",
+          "TLS_EMAIL": "${letsencrypt.certificate.email}"
+        }
+      },
+      "stopRunner" : {
+        "timeout" : "30000"
+      },
+      "externalLink" : {
+        "name" : "schema-registry-ui",
+        "label" : "Schema Registry UI",
+        "url" : "http://${host}:${port}",
+        "secureUrl" : "https://${host}:${ssl.port}"
+      },
+      "topology" : {
+        "minInstances" : "0",
+        "softMinInstances" : "1"
+      },
+      "kerberosPrincipals" : [
+        {
+          "name" : "PARROT_PRINCIPAL",
+          "primary" : "parrot",
+          "instance" : "${host}"
+        }
+      ],
+      "logging": {
+        "dir": "/var/log/parrot-manager",
+        "filename": "schema-registry-ui-${host}.log",
+        "modifiable": false,
+        "loggingType": "other"
+      },
+      "configWriter": {
+          "auxConfigGenerators" : [
+            {
+              "filename" : "Caddyfile",
+              "sourceFilename" : "aux/Caddyfile"
+            }
+          ]
+      },
+      "parameters": [
+        {
+          "name": "port",
+          "label": "HTTP Port",
+          "description": "Port to listen on for new HTTP connections to Schema Registry UI.",
+          "required": true,
+          "type": "port",
+          "default": 8003,
+          "configurableInWizard": true
+        },
+        {
+          "name": "ssl.port",
+          "label": "HTTPS Port",
+          "description": "Port to listen on for new HTTPS connections to Schema Registry UI.",
+          "required": true,
+          "type": "port",
+          "default": 8803,
+          "configurableInWizard": true
+        },
+        {
+          "name": "proxy.enabled",
+          "label": "Proxy Enabled",
+          "description": "Enable Proxy if there is a CORS issue or a firewall to pass through. NOTE: when proxying, for the 'schema.registry.url' you have to use an IP address or a domain that can be resolved to it, avoiding using 'localhost'.",
+          "required": true,
+          "type": "boolean",
+          "default": false,
+          "configurableInWizard": true
+        },
+        {
+          "name": "allow.global",
+          "label": "Allow Global Compatibility",
+          "description": "The global compatibility level support let's you configure Global Compatibility Level from the UI. For more info about the Schema Registry compatibility check out the Confluent documentation at 'http://docs.confluent.io/current/schema-registry/docs/api.html'.",
+          "required": true,
+          "type": "boolean",
+          "default": false,
+          "configurableInWizard": true
+        },
+        {
+          "name": "allow.transitive",
+          "label": "Allow Transitive Compatibility Levels",
+          "description": "To enable the transitive compatibility levels: this is supported for Parrot Schema Registry >= x-3.1.1 For more info about the Schema Registry compatibility check out the Confluent documentation at 'http://docs.confluent.io/current/schema-registry/docs/api.html'.",
+          "required": true,
+          "type": "boolean",
+          "default": false,
+          "configurableInWizard": true
+        },
+        {
+          "name": "ssl.enabled",
+          "label": "SSL Enabled",
+          "description": "Enable HTTPS by generating a Let's Ecrypt SSL certificate.",
+          "required": false,
+          "type": "boolean",
+          "default": false,
+          "configurableInWizard": true
+        },
+        {
+          "name": "letsencrypt.certificate.email",
+          "label": "SSL Enabled",
+          "description": "Email address to use when generating the Let'S Encrypt SSL certificate.",
+          "required": false,
+          "type": "string",
+          "default": "",
+          "configurableInWizard": true
+        }
+      ]
+    }
+  ]
+}
