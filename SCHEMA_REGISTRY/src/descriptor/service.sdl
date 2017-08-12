@@ -11,9 +11,9 @@
     }
   },
   "runAs": {
-    "user": "parrot",
-    "group": "parrot",
-    "principal": "parrot"
+    "user": "kafka",
+    "group": "kafka",
+    "principal": "kafka"
   },
   "icon": "images/parrot.png",
   "parcel": {
@@ -34,6 +34,7 @@
     }
   ],
   "inExpressWizard": true,
+  "kerberos" : "${kerberos.auth.enable}",
   "parameters": [
     {
       "name": "port",
@@ -111,6 +112,14 @@
       "configurableInWizard": true
     },
     {
+      "name" : "kerberos.auth.enable",
+      "label" : "Enable Kerberos Authentication",
+      "description" : "Enable Kerberos authentication for this SCHEMA_REGISTRY service.",
+      "type" : "boolean",
+      "default" : "false",
+      "configurableInWizard": true
+    },
+    {
       "name": "zookeeper.set.acl",
       "label": "Zookeeper Set ACL",
       "description": "Whether or not to set an ACL in ZooKeeper when znodes are created and ZooKeeper SASL authentication is configured. IMPORTANT: if set to true, the ZooKeeper SASL principal must be the same as the Kafka brokers.",
@@ -159,28 +168,11 @@
     },
     {
       "name": "access.control.allow.origin",
-      "label": "Kafkastore Bootstrap Servers",
+      "label": "Access Control Allow Origin",
       "description": "Set value for Jetty Access-Control-Allow-Origin header.",
       "required": false,
       "type": "string",
       "default": "*",
-      "configurableInWizard": true
-    },
-    {
-      "name": "ssl.protocol",
-      "label": "SSL Protocol",
-      "description": "The SSL protocol used to generate the SSLContext. Default setting is TLS, which is fine for most cases. Allowed values in recent JVMs are TLS, TLSv1.1 and TLSv1.2. SSL, SSLv2 and SSLv3 may be supported in older JVMs, but their usage is discouraged due to known security vulnerabilities.",
-      "required": false,
-      "type": "string_enum",
-      "validValues": [
-        "TLS",
-        "TLSv1.1",
-        "TLSv1.2",
-        "SSL",
-        "SSLv2",
-        "SSLv3"
-        ],
-      "default": "TLS",
       "configurableInWizard": true
     },
     {
@@ -189,7 +181,6 @@
       "description": "Used for HTTPS. The SSL security provider name. Leave blank to use Jetty’s default.",
       "required": false,
       "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -202,21 +193,11 @@
       "configurableInWizard": true
     },
     {
-      "name": "ssl.enabled.protocols",
-      "label": "SSL Enabled Protocols",
-      "description": "Used for HTTPS. The list of protocols enabled for SSL connections. Comma-separated list. Leave blank to use Jetty’s defaults.",
-      "required": false,
-      "type": "string_array",
-      "default": [],
-      "configurableInWizard": true
-    },
-    {
       "name": "ssl.keymanager.algorithm",
       "label": "SSL Keymanager Algorithm",
       "description": "Used for HTTPS. The algorithm used by the key manager factory for SSL connections. Leave blank to use Jetty’s default.",
       "required": false,
       "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -225,7 +206,6 @@
       "description": "Used for HTTPS. The algorithm used by the trust manager factory for SSL connections. Leave blank to use Jetty’s default.",
       "required": false,
       "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -234,7 +214,6 @@
       "description": "Used for HTTPS. A list of SSL cipher suites. Comma-separated list. Leave blank to use Jetty’s defaults.",
       "required": false,
       "type": "string_array",
-      "default": [],
       "configurableInWizard": true
     },
     {
@@ -243,7 +222,6 @@
       "description": "Used for HTTPS. The endpoint identification algorithm to validate the server hostname using the server certificate. Leave blank to use Jetty’s default.",
       "required": false,
       "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -252,7 +230,6 @@
       "description": "A list of Kafka brokers to connect to. For example,  PLAINTEXT://hostname:9092,SSL://hostname2:9092. If this configuration is not specified, the Schema Registry’s internal Kafka clients will get their Kafka bootstrap server list from ZooKeeper (configured with kafkastore.connection.url). Note that if kafkastore.bootstrap.servers is configured, kafkastore.connection.url still needs to be configured, too. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in ZooKeeper, but the Schema Registry may need to be configured with just one of those endpoints.",
       "required": false,
       "type": "string_array",
-      "default": [],
       "configurableInWizard": true
     },
     {
@@ -342,12 +319,14 @@
     {
       "name": "kafkastore.security.protocol",
       "label": "Kafkastore Security Protocol",
-      "description": "The security protocol to use when connecting with Kafka, the underlying persistent storage. Values can be PLAINTEXT or SSL.",
+      "description": "The security protocol to use when connecting with Kafka, the underlying persistent storage. Values can be PLAINTEXT, SASL_PLAINTEXT, SSL or SASL_SSL.",
       "required": false,
       "type": "string_enum",
       "validValues": [
         "PLAINTEXT",
-        "SSL"
+        "SSL",
+        "SASL_PLAINTEXT",
+        "SASL_SSL"
         ],
       "default": "PLAINTEXT",
       "configurableInWizard": true
@@ -359,7 +338,6 @@
       "required": false,
       "type": "path",
       "pathType": "localDataFile",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -368,7 +346,6 @@
       "description": "The password to access the keystore.",
       "required": false,
       "type": "password",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -377,7 +354,6 @@
       "description": "The password of the key contained in the keystore.",
       "required": false,
       "type": "password",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -387,7 +363,6 @@
       "required": false,
       "type": "path",
       "pathType": "localDataFile",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -396,7 +371,6 @@
       "description": "The password to access the trust store.",
       "required": false,
       "type": "password",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -405,7 +379,6 @@
       "description": "A list of cipher suites used for SSL.",
       "required": false,
       "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -414,7 +387,6 @@
       "description": "A list of cipher suites used for SSL.",
       "required": false,
       "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -454,47 +426,11 @@
       "configurableInWizard": true
     },
     {
-      "name": "kafkastore.ssl.protocol",
-      "label": "Kafkastore SSL Protocol",
-      "description": "The SSL protocol used.",
-      "required": false,
-      "type": "string_enum",
-      "validValues": [
-        "TLS",
-        "TLSv1.1",
-        "TLSv1.2",
-        "SSL",
-        "SSLv2",
-        "SSLv3"
-        ],
-      "default": "TLS",
-      "configurableInWizard": true
-    },
-    {
       "name": "kafkastore.ssl.provider",
       "label": "Kafkastore SSL Provider",
       "description": "The name of the security provider used for SSL.",
       "required": false,
       "type": "string",
-      "default": "TLS",
-      "configurableInWizard": true
-    },
-    {
-      "name": "kafkastore.ssl.truststore.type",
-      "label": "Kafkastore SSL Truststore Type",
-      "description": "The file format of the trust store.",
-      "required": false,
-      "type": "string",
-      "default": "JKS",
-      "configurableInWizard": true
-    },
-    {
-      "name": "kafkastore.sasl.kerberos.service.name",
-      "label": "Kafkastore SASL Kerberos Service Name",
-      "description": "The Kerberos principal name that the Kafka client runs as. This can be defined either in the JAAS config file or here.",
-      "required": false,
-      "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -566,7 +502,9 @@
           "SSL_KEYSTORE_LOCATION": "${ssl_server_keystore_location}",
           "SSL_KEYSTORE_PASSWORD": "${ssl_server_keystore_password}",
           "SSL_TRUSTSTORE_LOCATION": "${ssl_client_truststore_location}",
-          "SSL_TRUSTSTORE_PASSWORD": "${ssl_client_truststore_password}"
+          "SSL_TRUSTSTORE_PASSWORD": "${ssl_client_truststore_password}",
+          "KERBEROS_AUTH_ENABLED": "${kerberos.auth.enable}",
+          "DEBUG": "${debug}"
         }
       },
       "stopRunner" : {
@@ -574,25 +512,11 @@
       },
       "kerberosPrincipals" : [
         {
-          "name" : "PARROT_PRINCIPAL",
-          "primary" : "parrot",
+          "name" : "KAFKA_PRINCIPAL",
+          "primary" : "kafka",
           "instance" : "${host}"
         }
       ],
-      "sslServer": {
-        "keyIdentifier" : "schema-registry",
-        "keystoreFormat": "jks",
-        "enabledConfigName" : "ssl.enabled",
-        "keystoreLocationConfigName" : "ssl.keystore.location",
-        "keystorePasswordConfigName" : "ssl.keystore.password",
-        "keyPasswordOptionality" : "required",
-        "keystoreKeyPasswordConfigName" : "ssl.key.password"
-      },
-      "sslClient": {
-        "truststoreFormat": "jks",
-        "truststoreLocationConfigName" : "ssl.truststore.location",
-        "truststorePasswordConfigName" : "ssl.truststore.password"
-      },
       "logging": {
         "dir": "/var/log/schema-registry",
         "filename": "schema-registry-${host}.log",
@@ -600,11 +524,40 @@
         "configName": "schema-registry.log.dir",
         "loggingType": "log4j"
       },
+      "sslServer": {
+        "keyIdentifier" : "schema-registry",
+        "keystoreFormat": "jks",
+        "enabledConfigName" : "ssl.enabled",
+        "keystoreLocationConfigName" : "ssl.keystore.location",
+        "keystorePasswordConfigName" : "ssl.keystore.password",
+        "keystorePasswordCredentialProviderCompatible" : false,
+        "keystorePasswordScriptBased" : false,
+        "keyPasswordOptionality" : "required",
+        "keystoreKeyPasswordConfigName" : "ssl.key.password",
+        "keystoreKeyPasswordScriptBased" : false
+      },
+      "sslClient": {
+        "truststoreFormat": "jks",
+        "truststoreLocationConfigName" : "ssl.truststore.location",
+        "truststorePasswordConfigName" : "ssl.truststore.password",
+        "truststorePasswordScriptBased" : false
+      },
       "configWriter": {
         "generators": [
           {
             "filename": "schema-registry-conf/schema-registry.properties",
             "configFormat": "properties",
+            "excludedParams": [
+              "port",
+              "ssl.port",
+              "ssl_enabled",
+              "ssl_server_keystore_location",
+              "ssl_client_truststore_location",
+              "ssl_server_keystore_password",
+              "ssl_server_keystore_keypassword",
+              "ssl_client_truststore_password",
+              "ssl.client.auth"
+            ],
             "additionalConfigs" : [
               {
                 "key" : "#kafkastore.connection.url",
@@ -615,16 +568,61 @@
                 "value" : "{{LISTENERS}}"
               },
               {
+                "key" : "#authentication.realm",
+                "value" : "{{REALM}}"
+              },          
+              {
+                "key" : "#ssl.configs",
+                "value" : "{{SSL_CONFIGS}}"
+              },
+              {
                 "key" : "host.name",
                 "value" : "${host}"
               },
               {
+                "key" : "kafkastore.sasl.kerberos.service.name",
+                "value" : "kafka"
+              }              
+            ]
+          },
+          {
+            "filename": "ssl.properties",
+            "configFormat": "properties",
+            "includedParams": [
+              "ssl_server_keystore_location",
+              "ssl_server_keystore_password",
+              "ssl_server_keystore_keypassword",
+              "ssl_client_truststore_location",
+              "ssl_client_truststore_password",
+              "ssl.client.auth"
+            ],
+            "additionalConfigs" : [
+              {
+                "key" : "ssl.protocol",
+                "value" : "TLS"
+              },
+              {
+                "key" : "ssl.enabled.protocols",
+                "value" : "TLSv1.2,TLSv1.1,TLSv1"
+              },
+              {
                 "key" : "ssl.keystore.type",
+                "value" : "JKS"
+              },{
+                "key" : "ssl.truststore.type",
                 "value" : "JKS"
               },
               {
-                "key" : "ssl.truststore.type",
+                "key" : "kafkastore.ssl.keystore.type",
                 "value" : "JKS"
+              },
+              {
+                "key" : "kafkastore.ssl.truststore.type",
+                "value" : "JKS"
+              },
+              {
+                "key" : "kafkastore.ssl.protocol",
+                "value" : "TLS"
               }
             ]
           }

@@ -11,9 +11,9 @@
     }
   },
   "runAs": {
-    "user": "parrot",
-    "group": "parrot",
-    "principal": "parrot"
+    "user": "kafka",
+    "group": "kafka",
+    "principal": "kafka"
   },
   "icon": "images/parrot.png",
   "parcel": {
@@ -38,28 +38,21 @@
   "inExpressWizard": true,
   "parameters": [
     {
-      "name": "rest.advertised.host.name",
-      "label": "REST Advertised Port",
-      "description": "If this is set, this is the hostname that will be given out to other workers to connect to.",
-      "required": false,
-      "type": "port",
-      "configurableInWizard": true
-    },
-    {
-      "name": "rest.advertised.port",
-      "label": "REST Advertised Port",
-      "description": "If this is set, this is the port that will be given out to other workers to connect to.",
-      "required": false,
-      "type": "port",
-      "configurableInWizard": true
-    },
-    {
       "name": "rest.port",
       "label": "REST Port",
-      "description": "Port for the REST API to listen on.",
+      "description": "Port for the REST API to listen on HTTP.",
       "required": true,
       "type": "port",
       "default": 8083,
+      "configurableInWizard": true
+    },
+    {
+      "name": "ssl.rest.port",
+      "label": "SSL REST Port",
+      "description": "Port for the REST API to listen on HTTPS.",
+      "required": false,
+      "type": "port",
+      "default": 8483,
       "configurableInWizard": true
     },
     {
@@ -68,9 +61,6 @@
       "description": "A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. The client will make use of all servers irrespective of which servers are specified here for bootstrapping: this list only impacts the initial hosts used to discover the full set of servers. This list should be in the form host1:port1,host2:port2,.... Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).",
       "required": true,
       "type": "string_array",
-      "default": [
-        "localhost:9092"
-        ],
       "configurableInWizard": true
     },
     {
@@ -675,6 +665,7 @@
         "environmentVariables": {
           "HOST": "${host}",
           "PORT": "${rest.port}",
+          "SSL_PORT": "${ssl.rest.port}",
           "SSL_ENABLED": "${ssl_enabled}",
           "SSL_KEYSTORE_LOCATION": "${ssl_server_keystore_location}",
           "SSL_KEYSTORE_PASSWORD": "${ssl_server_keystore_password}",
@@ -687,8 +678,8 @@
       },
       "kerberosPrincipals" : [
         {
-          "name" : "PARROT_PRINCIPAL",
-          "primary" : "parrot",
+          "name" : "KAFKA_PRINCIPAL",
+          "primary" : "kafka",
           "instance" : "${host}"
         }
       ],
@@ -714,7 +705,7 @@
       "configWriter": {
         "generators": [
           {
-            "filename": "connect-avro-distributed.properties",
+            "filename": "parrot-stream-conf/connect-avro-distributed.properties",
             "configFormat": "properties",
             "additionalConfigs" : [
               {
@@ -724,6 +715,22 @@
               {
                 "key" : "rest.host.name",
                 "value" : "0.0.0.0"
+              },
+              {
+                "key" : "rest.advertised.host.name",
+                "value" : "${host}"
+              },              
+              {
+                "key" : "rest.advertised.port",
+                "value" : "{{ADVERTISED_PORT}}"
+              },
+              {
+                "key" : "key.converter.schema.registry.url",
+                "value" : "{{SCHEMA_REGISTRY_URL}}"
+              },
+              {
+                "key" : "value.converter.schema.registry.url",
+                "value" : "{{SCHEMA_REGISTRY_URL}}"
               },
               {
                 "key" : "config.storage.topic",

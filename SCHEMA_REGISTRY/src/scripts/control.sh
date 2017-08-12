@@ -4,6 +4,7 @@ set -x
 
 DEFAULT_SCHEMA_REGISTRY_HOME=/usr/share/java/schema-registry
 SCHEMA_REGISTRY_HOME=${SCHEMA_REGISTRY_HOME:-$DEFAULT_SCHEMA_REGISTRY_HOME}
+SCHEMA_REGISTRY_CONF_FILE=$CONF_DIR/schema-registry-conf/schema-registry.properties
 
 # Example first line of version file: version=0.1.0-3.2.2
 SCHEMA_REGISTRY_VERSION=$(grep "^version=" $SCHEMA_REGISTRY_HOME/cloudera/cdh_version.properties | cut -d '=' -f 2)
@@ -15,18 +16,10 @@ if [[ -n $CHROOT ]]; then
   QUORUM="${QUORUM}${CHROOT}"
 fi
 
-# Add Listener
-if [[ ${SSL_ENABLED} == "true" ]]; then
-    LISTENERS="https://0.0.0.0:${SSL_PORT}"
-else
-    LISTENERS="http://0.0.0.0:${PORT}"
-fi
-
 # Define log4j.properties
-LOG_DIR=/var/log/schema-registry
+export LOG_DIR=/var/log/schema-registry
 SCHEMA_REGISTRY_LOG4J_OPTS="-Dlog4j.configuration=file:$CONF_DIR/log4j.properties"
 export SCHEMA_REGISTRY_LOG4J_OPTS="-Dschema-registry.log.dir=$LOG_DIR $SCHEMA_REGISTRY_LOG4J_OPTS"
-SCHEMA_REGISTRY_CONF_FILE=$CONF_DIR/schema-registry-conf/schema-registry.properties
 
 echo -e "######################################################################################"
 echo -e "# PARROT DISTRIBUTION - SCHEMA REGISTRY"
@@ -45,15 +38,68 @@ echo -e "#----------------------------------------------------------------------
 echo -e "# SSL_ENABLED:                $SSL_ENABLED"
 echo -e "# SSL_PORT:                   $SSL_PORT"
 echo -e "# SSL_KEYSTORE_LOCATION:      $SSL_KEYSTORE_LOCATION"
-echo -e "# SSL_KEYSTORE_PASSWORD:      $SSL_KEYSTORE_PASSWORD"
 echo -e "# SSL_TRUSTSTORE_LOCATION:    $SSL_TRUSTSTORE_LOCATION"
-echo -e "# SSL_TRUSTSTORE_PASSWORD:    $SSL_TRUSTSTORE_PASSWORD"
+echo -e "#-------------------------------------------------------------------------------------"
+echo -e "# KERBEROS_AUTH_ENABLED:      $KERBEROS_AUTH_ENABLED"
+echo -e "# KAFKA_PRINCIPAL:            $KAFKA_PRINCIPAL"
 echo -e "######################################################################################"
 
-# Replace kafkastore.connection.url placeholder with ZooKeeper Quorum
-perl -pi -e "s#\#kafkastore.connection.url={{QUORUM}}#kafkastore.connection.url=${QUORUM}#" $SCHEMA_REGISTRY_CONF_FILE
+# Generate JAAS config file
+if [[ ${KERBEROS_AUTH_ENABLED} == "true" ]]; then
 
-# Replace listeners placeholder with LISTENERS
+  set -- "$KAFKA_PRINCIPAL" 
+  IFS="/"; declare -a Array=($*)
+  REALM=${Array[1]}
+  perl -pi -e "s#\#authentication.realm={{REALM}}#authentication.realm=${REALM}#" $SCHEMA_REGISTRY_CONF_FILE
+
+  # If user has not provided safety valve, replace JAAS_CONFIGS's placeholder
+  if [ -z "$JAAS_CONFIGS" ]; then
+    KEYTAB_FILE="${CONF_DIR}/schema_registry.keytab"
+    JAAS_CONFIGS="
+KafkaClient {
+   com.sun.security.auth.module.Krb5LoginModule required
+   doNotPrompt=true
+   useKeyTab=true
+   storeKey=true
+   useTicketCache=true
+   keyTab=\"$KEYTAB_FILE\"
+   principal=\"$KAFKA_PRINCIPAL\";
+};
+
+Client {
+   com.sun.security.auth.module.Krb5LoginModule required
+   doNotPrompt=true
+   useKeyTab=true
+   storeKey=true
+   useTicketCache=false
+   keyTab=\"$KEYTAB_FILE\"
+   principal=\"$KAFKA_PRINCIPAL\";
+};"
+  fi
+  echo "${JAAS_CONFIGS}" > $CONF_DIR/jaas.conf
+  export SCHEMA_REGISTRY_OPTS="-Djava.security.auth.login.config=${CONF_DIR}/jaas.conf"
+  perl -pi -e "s#\zookeeper.set.acl=false#zookeeper.set.acl=true#" $SCHEMA_REGISTRY_CONF_FILE
+  export SCHEMA_REGISTRY_OPTS="${SCHEMA_REGISTRY_OPTS} -Dzookeeper.sasl.client.username=${ZK_PRINCIPAL_NAME}"
+
+
+fi
+
+SCHEMA_REGISTRY_OPTS="${SCHEMA_REGISTRY_OPTS} -Dsun.security.krb5.debug=${DEBUG}"
+if [[ "$DEBUG" == "true" ]]; then
+  SCHEMA_REGISTRY_OPTS="${SCHEMA_REGISTRY_OPTS} -Djavax.net.debug=all"
+fi
+
+# Add Listener
+if [[ ${SSL_ENABLED} == "true" ]]; then
+  SSL_CONFIGS=$(cat ssl.properties)
+  LISTENERS="https://0.0.0.0:${SSL_PORT}"
+  perl -pi -e "s#\#ssl.configs={{SSL_CONFIGS}}#${SSL_CONFIGS}#" $SCHEMA_REGISTRY_CONF_FILE
+else
+  LISTENERS="http://0.0.0.0:${PORT}"
+  perl -pi -e "s#\#ssl.configs={{SSL_CONFIGS}}##" $SCHEMA_REGISTRY_CONF_FILE
+fi
+
+perl -pi -e "s#\#kafkastore.connection.url={{QUORUM}}#kafkastore.connection.url=${QUORUM}#" $SCHEMA_REGISTRY_CONF_FILE
 perl -pi -e "s#\#listeners={{LISTENERS}}#listeners=${LISTENERS}#" $SCHEMA_REGISTRY_CONF_FILE
 
 # Run Confluent Schema Registry

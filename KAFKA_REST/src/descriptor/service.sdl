@@ -11,9 +11,9 @@
     }
   },
   "runAs": {
-    "user": "parrot",
-    "group": "parrot",
-    "principal": "parrot"
+    "user": "kafka",
+    "group": "kafka",
+    "principal": "kafka"
   },
   "icon": "images/parrot.png",
   "parcel": {
@@ -34,6 +34,7 @@
     }
   ],
   "inExpressWizard": true,
+  "kerberos" : "${kerberos.auth.enable}",
   "parameters": [
     {
       "name": "port",
@@ -59,15 +60,6 @@
       "description": "A list of Kafka brokers to connect to. For example, PLAINTEXT://hostname:9092,SSL://hostname2:9092. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in ZooKeeper, but Kafka REST may need to be configured with just one of those endpoints. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).",
       "required": true,
       "type": "string_array",
-      "configurableInWizard": true
-    },
-    {
-      "name": "schema.registry.url",
-      "label": "Schema Registry URL",
-      "description": "The base URL for the schema registry that should be used by the Avro serializer.",
-      "required": true,
-      "type": "uri",
-      "default": "http://localhost:8081",
       "configurableInWizard": true
     },
     {
@@ -347,10 +339,18 @@
       "type": "string",
       "default": "",
       "configurableInWizard": true
+    },    
+    {
+      "name" : "kerberos.auth.enable",
+      "label" : "Enable Kerberos Authentication",
+      "description" : "Enable Kerberos authentication for this KAFKA_REST service.",
+      "type" : "boolean",
+      "default" : "false",
+      "configurableInWizard": true
     },
     {
-      "name": "security.protocol.mode",
-      "label": "Security Protocol Mode",
+      "name": "client.security.mode",
+      "label": "Client Security Mode",
       "description": "Note that all the SSL ans SASL configurations (for REST Proxy to Broker communication) are prefixed with “client”. If you want the configuration to apply just to consumers or just to producers, you can set the mode to “consumer” or “producer” respectively. In addition to these configurations, for SSL make sure bootstrap.servers configuration is set with SSL://host:port end-points, or you’ll accidentally open an SSL connection to a non-SSL port. For the same reason for SASL make sure bootstrap.servers is set with SASL_PLAINTEXT://host:port or SASL_SSL://host:port. For better understanding security configuration check out the documentation for Kafka Security (http://docs.confluent.io/current/kafka/security.html) and for Schema Registry Security (http://docs.confluent.io/current/schema-registry/docs/security.html)",
       "required": false,
       "type": "string_enum",
@@ -360,20 +360,6 @@
         "producer"
       ],
       "default": "client",
-      "configurableInWizard": true
-    },
-    {
-      "name": "client.security.protocol",
-      "label": "Client Security Protocol",
-      "description": "Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.",
-      "required": false,
-      "type": "string_enum",
-      "validValues": [
-        "PLAINTEXT",
-        "SSL",
-        "SASL_PLAINTEXT",
-        "SASL_SSL"],
-      "default": "PLAINTEXT",
       "configurableInWizard": true
     },
     {
@@ -526,21 +512,25 @@
       "configurableInWizard": true
     },
     {
+      "name": "client.security.protocol",
+      "label": "Client Security Protocol",
+      "description": "Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.",
+      "required": false,
+      "type": "string_enum",
+      "validValues": [
+        "PLAINTEXT",
+        "SSL",
+        "SASL_PLAINTEXT",
+        "SASL_SSL"],
+      "default": "PLAINTEXT",
+      "configurableInWizard": true
+    },
+    {
       "name": "client.sasl.jaas.config",
       "label": "Client SASL JAAS Config",
       "description": "JAAS login context parameters for SASL connections in the format used by JAAS configuration files. JAAS configuration file format is described in Oracle’s documentation (http://docs.oracle.com/javase/8/docs/technotes/guides/security/jgss/tutorials/LoginConfigFile.html). The format for the value is: ‘ (=)*;’",
       "required": false,
       "type": "string",
-      "default": "",
-      "configurableInWizard": true
-    },
-    {
-      "name": "client.sasl.kerberos.service.name",
-      "label": "Client SASL Kerberos Service Name",
-      "description": "The Kerberos principal name that Kafka runs as. This can be defined either in Kafka’s JAAS config or in Kafka’s config.",
-      "required": false,
-      "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -633,7 +623,10 @@
           "SSL_KEYSTORE_LOCATION": "${ssl_server_keystore_location}",
           "SSL_KEYSTORE_PASSWORD": "${ssl_server_keystore_password}",
           "SSL_TRUSTSTORE_LOCATION": "${ssl_client_truststore_location}",
-          "SSL_TRUSTSTORE_PASSWORD": "${ssl_client_truststore_password}"
+          "SSL_TRUSTSTORE_PASSWORD": "${ssl_client_truststore_password}",
+          "CLIENT_SECURITY_PROTOCOL" : "${client.security.protocol}",
+          "CLIENT_SECURITY_MODE": "${client.security.mode}",
+          "KERBEROS_AUTH_ENABLED": "${kerberos.auth.enable}"
         }
       },
       "stopRunner" : {
@@ -641,8 +634,8 @@
       },
       "kerberosPrincipals" : [
         {
-          "name" : "PARROT_PRINCIPAL",
-          "primary" : "parrot",
+          "name" : "KAFKA_PRINCIPAL",
+          "primary" : "kafka",
           "instance" : "${host}"
         }
       ],
@@ -668,7 +661,7 @@
       "configWriter": {
         "generators": [
           {
-            "filename": "kafka-rest.properties",
+            "filename": "kafka-rest-conf/kafka-rest.properties",
             "configFormat": "properties",
             "additionalConfigs" : [
               {
@@ -684,13 +677,24 @@
                 "value" : "${host}"
               },
               {
+                "key" : "schema.registry.url",
+                "value" : "{{SCHEMA_REGISTRY_URL}}"
+              },
+              {
                 "key" : "ssl.keystore.type",
                 "value" : "JKS"
               },
               {
                 "key" : "ssl.truststore.type",
                 "value" : "JKS"
+              },
+              {
+                "key" : "client.sasl.kerberos.service.name",
+                "value" : "kafka"
               }
+            ],
+            "excludedParams": [
+              "client.security.mode"
             ]
           }
         ]

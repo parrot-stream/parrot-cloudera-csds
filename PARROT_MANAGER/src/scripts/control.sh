@@ -56,7 +56,7 @@ if [[ "$2" == "kafka-topics-ui" ]]; then
   KAFKA_REST_SSL_ENABLED=$(extract_peer_config_value $HOSTNAME "kafka-rest" "ssl.enabled")
   KAFKA_REST_SSL_PORT=$(extract_peer_config_value $HOSTNAME "kafka-rest" "ssl.port")
   KAFKA_REST_PORT=$(extract_peer_config_value $HOSTNAME "kafka-rest" "port")
-  if [[ "KAFKA_REST_SSL_ENABLED" == "true" ]]; then
+  if [[ "$KAFKA_REST_SSL_ENABLED" == "true" ]]; then
     export KAFKA_REST_PROXY_URL="https://$HOSTNAME:$KAFKA_REST_SSL_PORT"
   else
     export KAFKA_REST_PROXY_URL="http://$HOSTNAME:$KAFKA_REST_PORT"
@@ -67,7 +67,7 @@ elif [[ "$2" == "kafka-connect-ui" ]]; then
   while read -r host; do
     PARROT_STREAM_SSL_ENABLED=$(extract_peer_config_value $HOSTNAME "parrot-stream" "ssl.enabled")
     PARROT_STREAM_REST_PORT=$(extract_peer_config_value $HOSTNAME "parrot-stream" "rest.port")
-    if [[ "PARROT_STREAM_SSL_ENABLED" == "true" ]]; then
+    if [[ "$PARROT_STREAM_SSL_ENABLED" == "true" ]]; then
       CONNECT_URL="$CONNECT_URL,https://$host:$PARROT_STREAM_REST_PORT"
     else
       CONNECT_URL="$CONNECT_URL,http://$host:$PARROT_STREAM_REST_PORT"
@@ -80,17 +80,21 @@ elif [[ "$2" == "schema-registry-ui" ]]; then
   SCHEMA_REGISTRY_SSL_ENABLED=$(extract_peer_config_value $HOSTNAME "schema-registry" "ssl.enabled")
   SCHEMA_REGISTRY_SSL_PORT=$(extract_peer_config_value $HOSTNAME "schema-registry" "ssl.port")
   SCHEMA_REGISTRY_PORT=$(extract_peer_config_value $HOSTNAME "schema-registry" "port")
-  if [[ "SCHEMA_REGISTRY_SSL_ENABLED" == "true" ]]; then
+  if [[ "$SCHEMA_REGISTRY_SSL_ENABLED" == "true" ]]; then
     export SCHEMAREGISTRY_URL="https://$HOSTNAME:$SCHEMA_REGISTRY_SSL_PORT"
   else
     export SCHEMAREGISTRY_URL="http://$HOSTNAME:$SCHEMA_REGISTRY_PORT"
   fi
 fi
 
-if [[ "SSL_ENABLED" == "true" ]]; then
-  perl -pi -e "s#\{{TLS_ONOFF}}#on#" $CONF_DIR/Caddyfile
+if [[ "$SSL_ENABLED" == "true" ]]; then
+  perl -pi -e "s#\{{TLS_ONOFF}}#on#" $CONF_DIR/$2-conf/Caddyfile
+  perl -pi -e "s#\#https#https#" $CONF_DIR/$2-conf/Caddyfile
+  perl -pi -e "s#\#tls self_signed#tls self_signed#" $CONF_DIR/$2-conf/Caddyfile
+
 else
-  perl -pi -e "s#\{{TLS_ONOFF}}#off#" $CONF_DIR/Caddyfile
+  perl -pi -e "s#\{{TLS_ONOFF}}#off#" $CONF_DIR/$2-conf/Caddyfile
+  perl -pi -e "s#\#http#http#" $CONF_DIR/$2-conf/Caddyfile
 fi
 
 cp -r $PARROT_MANAGER_HOME/$2 $CONF_DIR

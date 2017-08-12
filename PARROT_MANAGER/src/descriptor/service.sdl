@@ -11,9 +11,9 @@
     }
   },
   "runAs": {
-    "user": "parrot",
-    "group": "parrot",
-    "principal": "parrot"
+    "user": "kafka",
+    "group": "kafka",
+    "principal": "kafka"
   },
   "icon": "images/parrot.png",
   "parcel": {
@@ -51,13 +51,13 @@
         "environmentVariables": {
           "HOST": "${host}",
           "PORT": "${port}",
+          "SSL_PORT": "${ssl.port}",
           "PROXY": "${proxy.enabled}",
           "PROXY_SKIP_VERIFY": "${proxy.skip.verify}",
           "MAX_BYTES": "${record.max.bytes}",
           "RECORD_POLL_TIMEOUT": "${record.poll.timeout}",
           "DEBUG_LOGS_ENABLED": "${debug.enabled}",
-          "SSL_ENABLED": "${ssl.enabled}",
-          "TLS_EMAIL": "${letsencrypt.certificate.email}"
+          "SSL_ENABLED": "${ssl_enabled}"
         }
       },
       "stopRunner" : {
@@ -75,11 +75,23 @@
       },
       "kerberosPrincipals" : [
         {
-          "name" : "PARROT_PRINCIPAL",
-          "primary" : "parrot",
+          "name" : "KAFKA_PRINCIPAL",
+          "primary" : "kafka",
           "instance" : "${host}"
         }
       ],
+      "sslServer": {
+        "keyIdentifier" : "kafka-topics-ui",
+        "enabledConfigName" : "ssl.enabled",
+        "keystoreLocationConfigName" : "ssl.keystore.location",
+        "keystorePasswordConfigName" : "ssl.keystore.password",
+        "keyPasswordOptionality" : "required",
+        "keystoreKeyPasswordConfigName" : "ssl.key.password"
+      },
+      "sslClient": {
+        "truststoreLocationConfigName" : "ssl.truststore.location",
+        "truststorePasswordConfigName" : "ssl.truststore.password"
+      },
       "logging": {
         "dir": "/var/log/parrot-manager",
         "filename": "kafka-topics-ui-${host}.log",
@@ -89,7 +101,7 @@
       "configWriter": {
           "auxConfigGenerators" : [
             {
-              "filename" : "Caddyfile",
+              "filename" : "kafka-topics-ui-conf/Caddyfile",
               "sourceFilename" : "aux/Caddyfile"
             }
           ]
@@ -108,7 +120,7 @@
           "name": "ssl.port",
           "label": "HTTPS Port",
           "description": "Port to listen on for new HTTPS connections to Kafka Topics UI.",
-          "required": true,
+          "required": false,
           "type": "port",
           "default": 8801,
           "configurableInWizard": true
@@ -159,24 +171,6 @@
           "type": "boolean",
           "default": false,
           "configurableInWizard": true
-        },
-        {
-          "name": "ssl.enabled",
-          "label": "SSL Enabled",
-          "description": "Enable HTTPS by generating a Let's Ecrypt SSL certificate.",
-          "required": false,
-          "type": "boolean",
-          "default": false,
-          "configurableInWizard": true
-        },
-        {
-          "name": "letsencrypt.certificate.email",
-          "label": "SSL Enabled",
-          "description": "Email address to use when generating the Let'S Encrypt SSL certificate.",
-          "required": false,
-          "type": "string",
-          "default": "",
-          "configurableInWizard": true
         }
       ]
     },
@@ -194,9 +188,9 @@
         "environmentVariables": {
           "HOST": "${host}",
           "PORT": "${port}",
-          "SSL_ENABLED": "${ssl.enabled}",
           "SSL_PORT": "${ssl.port}",
-          "TLS_EMAIL": "${letsencrypt.certificate.email}"
+          "SSL_ENABLED": "${ssl_enabled}",
+          "SSL_PORT": "${ssl.port}"
         }
       },
       "stopRunner" : {
@@ -214,11 +208,23 @@
       },
       "kerberosPrincipals" : [
         {
-          "name" : "PARROT_PRINCIPAL",
-          "primary" : "parrot",
+          "name" : "KAFKA_PRINCIPAL",
+          "primary" : "kafka",
           "instance" : "${host}"
         }
       ],
+      "sslServer": {
+        "keyIdentifier" : "kafka-connect-ui",
+        "enabledConfigName" : "ssl.enabled",
+        "keystoreLocationConfigName" : "ssl.keystore.location",
+        "keystorePasswordConfigName" : "ssl.keystore.password",
+        "keyPasswordOptionality" : "required",
+        "keystoreKeyPasswordConfigName" : "ssl.key.password"
+      },
+      "sslClient": {
+        "truststoreLocationConfigName" : "ssl.truststore.location",
+        "truststorePasswordConfigName" : "ssl.truststore.password"
+      },
       "logging": {
         "dir": "/var/log/parrot-manager",
         "filename": "kafka-connect-ui-${host}.log",
@@ -228,7 +234,7 @@
       "configWriter": {
           "auxConfigGenerators" : [
             {
-              "filename" : "Caddyfile",
+              "filename" : "kafka-connect-ui/Caddyfile",
               "sourceFilename" : "aux/Caddyfile"
             }
           ]
@@ -238,7 +244,7 @@
           "name": "port",
           "label": "HTTP Port",
           "description": "Port to listen on for new HTTP connections to Kafka Connect UI.",
-          "required": true,
+          "required": false,
           "type": "port",
           "default": 8002,
           "configurableInWizard": true
@@ -250,24 +256,6 @@
           "required": true,
           "type": "port",
           "default": 8802,
-          "configurableInWizard": true
-        },
-        {
-          "name": "ssl.enabled",
-          "label": "SSL Enabled",
-          "description": "Enable HTTPS by generating a Let's Ecrypt SSL certificate.",
-          "required": false,
-          "type": "boolean",
-          "default": false,
-          "configurableInWizard": true
-        },
-        {
-          "name": "letsencrypt.certificate.email",
-          "label": "SSL Enabled",
-          "description": "Email address to use when generating the Let'S Encrypt SSL certificate.",
-          "required": false,
-          "type": "string",
-          "default": "",
           "configurableInWizard": true
         }
       ]
@@ -286,11 +274,11 @@
         "environmentVariables": {
           "HOST": "${host}",
           "PORT": "${port}",
+          "SSL_PORT": "${ssl.port}",
           "PROXY": "${proxy.enabled}",
           "ALLOW_GLOBAL": "${allow.global}",
           "ALLOW_TRANSITIVE": "${allow.transitive}",
-          "SSL_ENABLED": "${ssl.enabled}",
-          "TLS_EMAIL": "${letsencrypt.certificate.email}"
+          "SSL_ENABLED": "${ssl_enabled}"
         }
       },
       "stopRunner" : {
@@ -308,11 +296,23 @@
       },
       "kerberosPrincipals" : [
         {
-          "name" : "PARROT_PRINCIPAL",
-          "primary" : "parrot",
+          "name" : "KAFKA_PRINCIPAL",
+          "primary" : "kafka",
           "instance" : "${host}"
         }
       ],
+      "sslServer": {
+        "keyIdentifier" : "schema-registry-ui",
+        "enabledConfigName" : "ssl.enabled",
+        "keystoreLocationConfigName" : "ssl.keystore.location",
+        "keystorePasswordConfigName" : "ssl.keystore.password",
+        "keyPasswordOptionality" : "required",
+        "keystoreKeyPasswordConfigName" : "ssl.key.password"
+      },
+      "sslClient": {
+        "truststoreLocationConfigName" : "ssl.truststore.location",
+        "truststorePasswordConfigName" : "ssl.truststore.password"
+      },
       "logging": {
         "dir": "/var/log/parrot-manager",
         "filename": "schema-registry-ui-${host}.log",
@@ -322,7 +322,7 @@
       "configWriter": {
           "auxConfigGenerators" : [
             {
-              "filename" : "Caddyfile",
+              "filename" : "schema-registry-ui-conf/Caddyfile",
               "sourceFilename" : "aux/Caddyfile"
             }
           ]
@@ -341,7 +341,7 @@
           "name": "ssl.port",
           "label": "HTTPS Port",
           "description": "Port to listen on for new HTTPS connections to Schema Registry UI.",
-          "required": true,
+          "required": false,
           "type": "port",
           "default": 8803,
           "configurableInWizard": true
@@ -371,24 +371,6 @@
           "required": true,
           "type": "boolean",
           "default": false,
-          "configurableInWizard": true
-        },
-        {
-          "name": "ssl.enabled",
-          "label": "SSL Enabled",
-          "description": "Enable HTTPS by generating a Let's Ecrypt SSL certificate.",
-          "required": false,
-          "type": "boolean",
-          "default": false,
-          "configurableInWizard": true
-        },
-        {
-          "name": "letsencrypt.certificate.email",
-          "label": "SSL Enabled",
-          "description": "Email address to use when generating the Let'S Encrypt SSL certificate.",
-          "required": false,
-          "type": "string",
-          "default": "",
           "configurableInWizard": true
         }
       ]
