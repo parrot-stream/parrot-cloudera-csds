@@ -163,7 +163,7 @@
       "description": "Set value to Jetty Access-Control-Allow-Origin header for specified methods.",
       "required": false,
       "type": "string",
-      "default": "GSSAPI,GET,POST,PUT,OPTIONS",
+      "default": "GET,POST,PUT,OPTIONS,DELETE,HEAD",
       "configurableInWizard": true
     },
     {
@@ -587,7 +587,7 @@
             ]
           },
           {
-            "filename": "ssl.properties",
+            "filename": "schema-registry-conf/ssl.properties",
             "configFormat": "properties",
             "includedParams": [
               "ssl_server_keystore_location",

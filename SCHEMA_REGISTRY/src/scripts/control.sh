@@ -2,10 +2,9 @@
 
 set -x
 
-DEFAULT_SCHEMA_REGISTRY_HOME=/usr/share/java/schema-registry
-SCHEMA_REGISTRY_HOME=${SCHEMA_REGISTRY_HOME:-$DEFAULT_SCHEMA_REGISTRY_HOME}
 SCHEMA_REGISTRY_CONF_FILE=$CONF_DIR/schema-registry-conf/schema-registry.properties
 SCHEMA_REGISTRY_LOG4J_CONF_FILE=$CONF_DIR/schema-registry-conf/log4j.properties
+SCHEMA_REGISTRY_OPTS=""
 
 # Example first line of version file: version=0.1.0-3.2.2
 SCHEMA_REGISTRY_VERSION=$(grep "^version=" $SCHEMA_REGISTRY_HOME/cloudera/cdh_version.properties | cut -d '=' -f 2)
@@ -16,8 +15,6 @@ QUORUM=$ZK_QUORUM
 if [[ -n $CHROOT ]]; then
   QUORUM="${QUORUM}${CHROOT}"
 fi
-
-SCHEMA_REGISTRY_OPTS=""
 
 # Define log4j.properties
 export LOG_DIR=/var/log/schema-registry
@@ -93,7 +90,7 @@ fi
 
 # Add Listener
 if [[ ${SSL_ENABLED} == "true" ]]; then
-  SSL_CONFIGS=$(cat ssl.properties)
+  SSL_CONFIGS=$(cat schema-registry-conf/ssl.properties)
   LISTENERS="https://0.0.0.0:${SSL_PORT}"
   perl -pi -e "s#\#ssl.configs={{SSL_CONFIGS}}#${SSL_CONFIGS}#" $SCHEMA_REGISTRY_CONF_FILE
 else

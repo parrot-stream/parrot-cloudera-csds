@@ -1124,7 +1124,7 @@
         {
           "filename" : "parrot-stream-conf/parrot-stream-hostnames",
           "refreshable" : false,
-          "params" : [ "rest.port", "ssl_enabled" ],
+          "params" : [ "rest.port", "ssl.rest.port", "ssl_enabled" ],
           "roleName" : "PARROT_STREAM_SERVER"
         }
       ]

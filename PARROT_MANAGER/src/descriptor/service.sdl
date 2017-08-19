@@ -11,9 +11,9 @@
     }
   },
   "runAs": {
-    "user": "kafka",
-    "group": "kafka",
-    "principal": "kafka"
+    "user": "parrot",
+    "group": "parrot",
+    "principal": "parrot"
   },
   "icon": "images/parrot.png",
   "parcel": {
@@ -75,8 +75,8 @@
       },
       "kerberosPrincipals" : [
         {
-          "name" : "KAFKA_PRINCIPAL",
-          "primary" : "kafka",
+          "name" : "PARROT_PRINCIPAL",
+          "primary" : "parrot",
           "instance" : "${host}"
         }
       ],
@@ -140,7 +140,7 @@
           "description": "To instruct the proxy to not verify the backend Kafka REST Proxy TLS certificate.",
           "required": false,
           "type": "boolean",
-          "default": false,
+          "default": true,
           "configurableInWizard": true
         },
         {
@@ -208,8 +208,8 @@
       },
       "kerberosPrincipals" : [
         {
-          "name" : "KAFKA_PRINCIPAL",
-          "primary" : "kafka",
+          "name" : "PARROT_PRINCIPAL",
+          "primary" : "parrot",
           "instance" : "${host}"
         }
       ],
@@ -276,6 +276,7 @@
           "PORT": "${port}",
           "SSL_PORT": "${ssl.port}",
           "PROXY": "${proxy.enabled}",
+          "PROXY_SKIP_VERIFY": "${proxy.skip.verify}",
           "ALLOW_GLOBAL": "${allow.global}",
           "ALLOW_TRANSITIVE": "${allow.transitive}",
           "SSL_ENABLED": "${ssl_enabled}"
@@ -296,8 +297,8 @@
       },
       "kerberosPrincipals" : [
         {
-          "name" : "KAFKA_PRINCIPAL",
-          "primary" : "kafka",
+          "name" : "PARROT_PRINCIPAL",
+          "primary" : "parrot",
           "instance" : "${host}"
         }
       ],
@@ -347,12 +348,21 @@
           "configurableInWizard": true
         },
         {
+          "name": "proxy.skip.verify",
+          "label": "Proxy Skip Verify",
+          "description": "If Parrot Schema Registry uses self-signed SSL certificates, you can enable the Proxy Skip Verify environment to instruct the proxy to not verify the backend TLS certificate.",
+          "required": true,
+          "type": "boolean",
+          "default": true,
+          "configurableInWizard": true
+        },
+        {
           "name": "proxy.enabled",
           "label": "Proxy Enabled",
           "description": "Enable Proxy if there is a CORS issue or a firewall to pass through. NOTE: when proxying, for the 'schema.registry.url' you have to use an IP address or a domain that can be resolved to it, avoiding using 'localhost'.",
           "required": true,
           "type": "boolean",
-          "default": false,
+          "default": true,
           "configurableInWizard": true
         },
         {
