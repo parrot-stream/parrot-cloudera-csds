@@ -395,7 +395,7 @@
       "description": "The algorithm used by key manager factory for SSL connections.",
       "required": false,
       "type": "string",
-      "default": "",
+      "default": "SunX509",
       "configurableInWizard": true
     },
     {
@@ -520,6 +520,7 @@
       "logging": {
         "dir": "/var/log/schema-registry",
         "filename": "schema-registry-${host}.log",
+        "configFilename": "schema-registry-conf/log4j.properties",
         "modifiable": true,
         "configName": "schema-registry.log.dir",
         "loggingType": "log4j"
