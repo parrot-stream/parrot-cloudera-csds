@@ -1,7 +1,7 @@
 {
   "name": "SCHEMA_REGISTRY",
   "label": "Schema Registry",
-  "description": "This is the Parrot distribution of the Confluent Schema Registry. The Confluent Schema Registry provides a RESTful interface for storing and retrieving Avro schemas. It stores a versioned history of all schemas, provides multiple compatibility settings and allows evolution of schemas according to the configured compatibility setting. It provides serializers that plug into Kafka clients that handle schema storage and retrieval for Kafka messages that are sent in the Avro format. <span class=\"error\">Before adding this service, ensure that the Parrot parcel of the Confluent Schema Registry is activated.</span>",
+  "description": "This is the Parrot distribution of the Confluent Schema Registry. The Confluent Schema Registry provides a RESTful interface for storing and retrieving Avro schemas. It stores a versioned history of all schemas, provides multiple compatibility settings and allows evolution of schemas according to the configured compatibility setting. It provides serializers that plug into Kafka clients that handle schema storage and retrieval for Kafka messages that are sent in the Avro format. <span class=\"error\">Before adding this service, ensure that the Parrot parcel of the Confluent Schema Registry is <a href=\"../../../parcel/status\">downloaded, distributed and activated</a>.</span>",
   "version": "{{CSD_VERSION}}",
   "compatibility": {
     "generation": 1,
@@ -34,7 +34,6 @@
     }
   ],
   "inExpressWizard": true,
-  "kerberos" : "${kerberos.auth.enable}",
   "parameters": [
     {
       "name": "port",
@@ -109,14 +108,6 @@
         "application/vnd.schemaregistry.v1+json",
         "application/vnd.schemaregistry+json, application/json"
         ],
-      "configurableInWizard": true
-    },
-    {
-      "name" : "kerberos.auth.enable",
-      "label" : "Enable Kerberos Authentication",
-      "description" : "Enable Kerberos authentication for this SCHEMA_REGISTRY service.",
-      "type" : "boolean",
-      "default" : "false",
       "configurableInWizard": true
     },
     {
@@ -227,7 +218,7 @@
     {
       "name": "kafkastore.bootstrap.servers",
       "label": "Kafkastore Bootstrap Servers",
-      "description": "A list of Kafka brokers to connect to. For example,  PLAINTEXT://hostname:9092,SSL://hostname2:9092. If this configuration is not specified, the Schema Registry’s internal Kafka clients will get their Kafka bootstrap server list from ZooKeeper (configured with kafkastore.connection.url). Note that if kafkastore.bootstrap.servers is configured, kafkastore.connection.url still needs to be configured, too. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in ZooKeeper, but the Schema Registry may need to be configured with just one of those endpoints.",
+      "description": "A list of Kafka brokers to connect to. For example,  PLAINTEXT://hostname-1:9092,SSL://hostname-2:9093. If this configuration is not specified, the Schema Registry’s internal Kafka clients will get their Kafka bootstrap server list from ZooKeeper (configured with kafkastore.connection.url). Note that if kafkastore.bootstrap.servers is configured, kafkastore.connection.url still needs to be configured, too. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in ZooKeeper, but the Schema Registry may need to be configured with just one of those endpoints.",
       "required": false,
       "type": "string_array",
       "configurableInWizard": true
@@ -503,7 +494,7 @@
           "SSL_KEYSTORE_PASSWORD": "${ssl_server_keystore_password}",
           "SSL_TRUSTSTORE_LOCATION": "${ssl_client_truststore_location}",
           "SSL_TRUSTSTORE_PASSWORD": "${ssl_client_truststore_password}",
-          "KERBEROS_AUTH_ENABLED": "${kerberos.auth.enable}",
+          "KAFKASTORE_SECURITY_PROTOCOL": "${kafkastore.security.protocol}",
           "DEBUG": "${debug}"
         }
       },
@@ -662,10 +653,19 @@
         {
           "filename" : "schema-registry-conf/schema-registry-hostnames",
           "refreshable" : false,
-          "params" : [ "port", "ssl.port", "ssl_enabled" ],
+          "params" : [ "port", "ssl.port", "ssl_enabled", "kafkastore.security.protocol" ],
           "roleName" : "SCHEMA_REGISTRY_SERVER"
         }
       ]
     }
+  },
+  "rollingRestart": {
+    "nonWorkerSteps": [
+      {
+        "roleName": "SCHEMA_REGISTRY_SERVER",
+        "bringUpCommands": [ "Start" ],
+        "bringDownCommands": [ "Stop" ]
+      }
+    ]
   }
 }

@@ -64,7 +64,7 @@
           <execution>
             <id>validate-schema</id>
             <configuration>
-              <addValidServiceTypes>KAFKA_REST,SCHEMA_REGISTRY</addValidServiceTypes>
+              <addValidServiceTypes>KAFKA_REST,SCHEMA_REGISTRY,PARROT_STREAM</addValidServiceTypes>
             </configuration>
           </execution>
         </executions>

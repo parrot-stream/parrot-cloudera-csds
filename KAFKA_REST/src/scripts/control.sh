@@ -46,31 +46,48 @@ export KAFKAREST_LOG4J_OPTS="-Dkafkarest.log.dir=$LOG_DIR $KAFKAREST_LOG4J_OPTS"
 echo -e "######################################################################################"
 echo -e "# PARROT DISTRIBUTION - KAFKA REST PROXY"
 echo -e "#-------------------------------------------------------------------------------------"
-echo -e "# DATE:                        `date`"
-echo -e "# PORT:                        $PORT"
-echo -e "# HOST:                        $HOST"
-echo -e "# PWD:                         `pwd`"
-echo -e "# CONF_DIR:                    $CONF_DIR"
-echo -e "# CONF_FILE:                   $KAFKAREST_CONF_FILE"
-echo -e "# KAFKAREST_HOME:              $KAFKAREST_HOME"
-echo -e "# KAFKAREST_VERSION:           $KAFKAREST_VERSION"
-echo -e "# KAFKAREST_LOG4J_OPTS:        $KAFKAREST_LOG4J_OPTS"
-echo -e "# ZK_QUORUM:                   $QUORUM"
+echo -e "# DATE:                      `date`"
+echo -e "# PORT:                      $PORT"
+echo -e "# HOST:                      $HOST"
+echo -e "# PWD:                       `pwd`"
+echo -e "# CONF_DIR:                  $CONF_DIR"
+echo -e "# CONF_FILE:                 $KAFKAREST_CONF_FILE"
+echo -e "# KAFKAREST_HOME:            $KAFKAREST_HOME"
+echo -e "# KAFKAREST_VERSION:         $KAFKAREST_VERSION"
+echo -e "# KAFKAREST_LOG4J_OPTS:      $KAFKAREST_LOG4J_OPTS"
+echo -e "# ZK_QUORUM:                 $QUORUM"
+echo -e "# CSD_JAVA_OPTS:             $CSD_JAVA_OPTS"
 echo -e "#-------------------------------------------------------------------------------------"
-echo -e "# SSL_ENABLED:                 $SSL_ENABLED"
-echo -e "# SSL_PORT:                    $SSL_PORT"
-echo -e "# SSL_KEYSTORE_LOCATION:       $SSL_KEYSTORE_LOCATION"
-echo -e "# SSL_KEYSTORE_PASSWORD:       $SSL_KEYSTORE_PASSWORD"
-echo -e "# SSL_TRUSTSTORE_LOCATION:     $SSL_TRUSTSTORE_LOCATION"
-echo -e "# SSL_TRUSTSTORE_PASSWORD:     $SSL_TRUSTSTORE_PASSWORD"
+echo -e "# SSL_ENABLED:               $SSL_ENABLED"
+echo -e "# SSL_PORT:                  $SSL_PORT"
+echo -e "# SSL_KEYSTORE_LOCATION:     $SSL_KEYSTORE_LOCATION"
+echo -e "# SSL_KEYSTORE_PASSWORD:     $SSL_KEYSTORE_PASSWORD"
+echo -e "# SSL_TRUSTSTORE_LOCATION:   $SSL_TRUSTSTORE_LOCATION"
+echo -e "# SSL_TRUSTSTORE_PASSWORD:   $SSL_TRUSTSTORE_PASSWORD"
 echo -e "#-------------------------------------------------------------------------------------"
-echo -e "# CLIENT_SECURITY_MODE:        $CLIENT_SECURITY_MODE"
-echo -e "# CLIENT_SECURITY_PROTOCOL:    $CLIENT_SECURITY_PROTOCOL"
-echo -e "# KERBEROS_AUTH_ENABLED:       $KERBEROS_AUTH_ENABLED"
-echo -e "# KAFKA_PRINCIPAL:             $KAFKA_PRINCIPAL"
+echo -e "# CLIENT_SECURITY_MODE:      $CLIENT_SECURITY_MODE"
+echo -e "# KAFKA_PRINCIPAL:           $KAFKA_PRINCIPAL"
+echo -e "#-------------------------------------------------------------------------------------"
+echo -e "# JAVA_HEAP_SIZE_MB:         $JAVA_HEAP_SIZE_MB"
 echo -e "#-------------------------------------------------------------------------------------"
 
-if [[ (${CLIENT_SECURITY_PROTOCOL} == "SASL_PLAINTEXT") || (${CLIENT_SECURITY_PROTOCOL} == "SASL_SSL") ]]; then
+# Add Schema Registry URL
+HOSTNAMES=$(extract_peer_hosts "schema-registry")
+SCHEMA_REGISTRY_URL=""
+while read -r host; do
+  SCHEMA_REGISTRY_SSL_ENABLED=$(extract_peer_config_value $HOSTNAME "schema-registry" "ssl.enabled")
+  SCHEMA_REGISTRY_SSL_PORT=$(extract_peer_config_value $HOSTNAME "schema-registry" "ssl.port")
+  SCHEMA_REGISTRY_PORT=$(extract_peer_config_value $HOSTNAME "schema-registry" "port")
+  SCHEMA_REGISTRY_SECURITY_PROTOCOL=$(extract_peer_config_value $HOSTNAME "schema-registry" "kafkastore.security.protocol")
+  if [[ ${SCHEMA_REGISTRY_SSL_ENABLED} == "true" ]]; then
+    SCHEMA_REGISTRY_URL="$SCHEMA_REGISTRY_URL,https://$host:$SCHEMA_REGISTRY_SSL_PORT"
+  else
+    SCHEMA_REGISTRY_URL="$SCHEMA_REGISTRY_URL,http://$host:$SCHEMA_REGISTRY_PORT"
+  fi
+   perl -pi -e "s#{{SECURITY_PROTOCOL}}#${SCHEMA_REGISTRY_SECURITY_PROTOCOL}##" $KAFKAREST_CONF_FILE
+done <<< "$HOSTNAMES"
+
+if [[ (${SCHEMA_REGISTRY_SECURITY_PROTOCOL} == "SASL_PLAINTEXT") || (${SCHEMA_REGISTRY_SECURITY_PROTOCOL} == "SASL_SSL") ]]; then
   # If user has not provided safety valve, replace JAAS_CONFIGS's placeholder
   if [ -z "$JAAS_CONFIGS" ]; then
     KEYTAB_FILE="${CONF_DIR}/kafka_rest.keytab"
@@ -94,7 +111,11 @@ Client {
 "
   fi
   echo "${JAAS_CONFIGS}" > $CONF_DIR/jaas.conf
-  export KAFKAREST_OPTS="${KAFKAREST_OPTS} -Djava.security.auth.login.config=${CONF_DIR}/jaas.conf"
+  KAFKAREST_OPTS="${KAFKAREST_OPTS} -Djava.security.auth.login.config=${CONF_DIR}/jaas.conf"
+
+  if [[ ${DEBUG} == "true" ]]; then
+    KAFKAREST_OPTS="${KAFKAREST_OPTS} -Dsun.security.krb5.debug=true"
+  fi
 fi
 
 # Add Listener
@@ -107,20 +128,6 @@ else
   perl -pi -e "s#\#ssl.configs={{SSL_CONFIGS}}##" $KAFKAREST_CONF_FILE
 fi
 
-# Add Schema Registry URL
-HOSTNAMES=$(extract_peer_hosts "schema-registry")
-SCHEMA_REGISTRY_URL=""
-while read -r host; do
-  SCHEMA_REGISTRY_SSL_ENABLED=$(extract_peer_config_value $HOSTNAME "schema-registry" "ssl.enabled")
-  SCHEMA_REGISTRY_SSL_PORT=$(extract_peer_config_value $HOSTNAME "schema-registry" "ssl.port")
-  SCHEMA_REGISTRY_PORT=$(extract_peer_config_value $HOSTNAME "schema-registry" "port")
-  if [[ ${SCHEMA_REGISTRY_SSL_ENABLED} == "true" ]]; then
-    SCHEMA_REGISTRY_URL="$SCHEMA_REGISTRY_URL,https://$host:$SCHEMA_REGISTRY_SSL_PORT"
-  else
-    SCHEMA_REGISTRY_URL="$SCHEMA_REGISTRY_URL,http://$host:$SCHEMA_REGISTRY_PORT"
-  fi
-done <<< "$HOSTNAMES"
-
 export SCHEMA_REGISTRY_URL=${SCHEMA_REGISTRY_URL#","}
 
 echo -e "# SCHEMA_REGISTRY_URL:         $SCHEMA_REGISTRY_URL"
@@ -130,6 +137,10 @@ perl -pi -e "s#\#zookeeper.connect={{QUORUM}}#zookeeper.connect=${QUORUM}#" $KAF
 perl -pi -e "s#\#listeners={{LISTENERS}}#listeners=${LISTENERS}#" $KAFKAREST_CONF_FILE
 perl -pi -e "s#\{{SCHEMA_REGISTRY_URL}}#${SCHEMA_REGISTRY_URL}#" $KAFKAREST_CONF_FILE
 perl -pi -e "s#^client.#$CLIENT_SECURITY_MODE.#" $KAFKAREST_CONF_FILE
+
+# Java Opts
+export KAFKAREST_HEAP_OPTS="-Xmx${JAVA_HEAP_SIZE_MB}M"
+export KAFKAREST_OPTS
 
 # Run Confluent Kafka REST Proxy
 exec $KAFKAREST_HOME/bin/kafka-rest-start $KAFKAREST_CONF_FILE

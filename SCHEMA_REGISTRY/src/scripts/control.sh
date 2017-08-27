@@ -24,24 +24,25 @@ export SCHEMA_REGISTRY_LOG4J_OPTS="-Dschema-registry.log.dir=$LOG_DIR $SCHEMA_RE
 echo -e "######################################################################################"
 echo -e "# PARROT DISTRIBUTION - SCHEMA REGISTRY"
 echo -e "#-------------------------------------------------------------------------------------"
-echo -e "# DATE:                       `date`"
-echo -e "# PORT:                       $PORT"
-echo -e "# HOST:                       $HOST"
-echo -e "# PWD:                        `pwd`"
-echo -e "# CONF_DIR:                   $CONF_DIR"
-echo -e "# CONF_FILE:                  $CONF_FILE"
-echo -e "# SCHEMA_REGISTRY_HOME:       $SCHEMA_REGISTRY_HOME"
-echo -e "# SCHEMA_REGISTRY_VERSION:    $SCHEMA_REGISTRY_VERSION"
-echo -e "# SCHEMA_REGISTRY_LOG4J_OPTS: $SCHEMA_REGISTRY_LOG4J_OPTS"
-echo -e "# ZK_QUORUM:                  $QUORUM"
+echo -e "# DATE:                         `date`"
+echo -e "# PORT:                         $PORT"
+echo -e "# HOST:                         $HOST"
+echo -e "# PWD:                          `pwd`"
+echo -e "# CONF_DIR:                     $CONF_DIR"
+echo -e "# CONF_FILE:                    $CONF_FILE"
+echo -e "# SCHEMA_REGISTRY_HOME:         $SCHEMA_REGISTRY_HOME"
+echo -e "# SCHEMA_REGISTRY_VERSION:      $SCHEMA_REGISTRY_VERSION"
+echo -e "# SCHEMA_REGISTRY_LOG4J_OPTS:   $SCHEMA_REGISTRY_LOG4J_OPTS"
+echo -e "# ZK_QUORUM:                    $QUORUM"
 echo -e "#-------------------------------------------------------------------------------------"
-echo -e "# SSL_ENABLED:                $SSL_ENABLED"
-echo -e "# SSL_PORT:                   $SSL_PORT"
-echo -e "# SSL_KEYSTORE_LOCATION:      $SSL_KEYSTORE_LOCATION"
-echo -e "# SSL_TRUSTSTORE_LOCATION:    $SSL_TRUSTSTORE_LOCATION"
+echo -e "# SSL_ENABLED:                  $SSL_ENABLED"
+echo -e "# SSL_PORT:                     $SSL_PORT"
+echo -e "# SSL_KEYSTORE_LOCATION:        $SSL_KEYSTORE_LOCATION"
+echo -e "# SSL_TRUSTSTORE_LOCATION:      $SSL_TRUSTSTORE_LOCATION"
 echo -e "#-------------------------------------------------------------------------------------"
-echo -e "# KERBEROS_AUTH_ENABLED:      $KERBEROS_AUTH_ENABLED"
-echo -e "# KAFKA_PRINCIPAL:            $KAFKA_PRINCIPAL"
+echo -e "# KERBEROS_AUTH_ENABLED:        $KERBEROS_AUTH_ENABLED"
+echo -e "# KAFKASTORE_SECURITY_PROTOCOL: $KAFKASTORE_SECURITY_PROTOCOL"
+echo -e "# KAFKA_PRINCIPAL:              $KAFKA_PRINCIPAL"
 echo -e "######################################################################################"
 
 if [[ -z ${ZK_PRINCIPAL_NAME} ]]; then
@@ -49,7 +50,7 @@ if [[ -z ${ZK_PRINCIPAL_NAME} ]]; then
 fi
 
 # Generate JAAS config file
-if [[ ${KERBEROS_AUTH_ENABLED} == "true" ]]; then
+if [[ (${KAFKASTORE_SECURITY_PROTOCOL} == "SASL_PLAINTEXT") || (${KAFKASTORE_SECURITY_PROTOCOL} == "SASL_SSL") ]]; then
 
   REALM="${KAFKA_PRINCIPAL#k*@}"
   perl -pi -e "s#\#authentication.realm={{REALM}}#authentication.realm=${REALM}#" $SCHEMA_REGISTRY_CONF_FILE

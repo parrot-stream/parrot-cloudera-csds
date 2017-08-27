@@ -1,7 +1,7 @@
 {
   "name": "KAFKA_REST",
   "label": "Kafka REST Proxy",
-  "description": "This is the Parrot distribution of the Confluent Kafka REST Proxy. The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes it easy to produce and consume messages, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients. Examples of use cases include reporting data to Kafka from any frontend app built in any language, ingesting messages into a stream processing framework that doesn’t yet support Kafka, and scripting administrative actions. <span class=\"error\">Before adding this service, ensure that the Parrot parcel of the Confluent Kafka REST Proxy is distributed and activated.</span>",
+  "description": "This is the Parrot distribution of the Confluent Kafka REST Proxy. The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes it easy to produce and consume messages, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients. Examples of use cases include reporting data to Kafka from any frontend app built in any language, ingesting messages into a stream processing framework that doesn’t yet support Kafka, and scripting administrative actions. <span class=\"error\">Before adding this service, ensure that the Parrot parcel of the Confluent Kafka REST Proxy is <a href=\"../../../parcel/status\">downloaded, distributed and activated</a>.</span>",
   "version": "{{CSD_VERSION}}",
   "compatibility": {
     "generation": 1,
@@ -34,7 +34,6 @@
     }
   ],
   "inExpressWizard": true,
-  "kerberos" : "${kerberos.auth.enable}",
   "parameters": [
     {
       "name": "port",
@@ -58,7 +57,7 @@
       "name": "bootstrap.servers",
       "label": "Bootstrap Servers",
       "description": "A list of Kafka brokers to connect to. For example, PLAINTEXT://hostname:9092,SSL://hostname2:9092. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in ZooKeeper, but Kafka REST may need to be configured with just one of those endpoints. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).",
-      "required": true,
+      "required": false,
       "type": "string_array",
       "configurableInWizard": true
     },
@@ -271,6 +270,16 @@
       "configurableInWizard": true
     },
     {
+      "name": "java.heap.size.mb",
+      "label": "Java Heap Size",
+      "description": "Java Heap Size for Kafka Connect workers",
+      "required": false,
+      "type": "long",
+      "default": 512,
+      "unit": "megabytes",
+      "configurableInWizard": true
+    },
+    {
       "name": "ssl.provider",
       "label": "SSL Provider",
       "description": "Used for HTTPS. The SSL security provider name. Leave blank to use Jetty’s default.",
@@ -322,19 +331,11 @@
       "type": "string",
       "default": "",
       "configurableInWizard": true
-    },    
-    {
-      "name" : "kerberos.auth.enable",
-      "label" : "Enable Kerberos Authentication",
-      "description" : "Enable Kerberos authentication for this KAFKA_REST service.",
-      "type" : "boolean",
-      "default" : "false",
-      "configurableInWizard": true
     },
     {
       "name": "client.security.mode",
       "label": "Client Security Mode",
-      "description": "Note that all the SSL ans SASL configurations (for REST Proxy to Broker communication) are prefixed with “client”. If you want the configuration to apply just to consumers or just to producers, you can set the mode to “consumer” or “producer” respectively. In addition to these configurations, for SSL make sure bootstrap.servers configuration is set with SSL://host:port end-points, or you’ll accidentally open an SSL connection to a non-SSL port. For the same reason for SASL make sure bootstrap.servers is set with SASL_PLAINTEXT://host:port or SASL_SSL://host:port. For better understanding security configuration check out the documentation for Kafka Security (http://docs.confluent.io/current/kafka/security.html) and for Schema Registry Security (http://docs.confluent.io/current/schema-registry/docs/security.html)",
+      "description": "Note that all the SSL ans SASL configurations (for REST Proxy to Broker communication) are prefixed with “client”. If you want the configuration to apply just to consumers or just to producers, you can set the mode to “consumer” or “producer” respectively. In addition to these configurations, for SSL make sure bootstrap.servers configuration is set with SSL://host:port end-points, or you’ll accidentally open an SSL connection to a non-SSL port. For the same reason for SASL make sure bootstrap.servers is set with SASL_PLAINTEXT://host:port or SASL_SSL://host:port. For better understanding security configuration check out the <a href=\"http://docs.confluent.io/current/kafka/security.html\">documentation for Kafka Security</a> and for <a href=\"http://docs.confluent.io/current/schema-registry/docs/security.html\">Schema Registry Security</a>",
       "required": false,
       "type": "string_enum",
       "validValues": [
@@ -482,20 +483,6 @@
       "configurableInWizard": true
     },
     {
-      "name": "client.security.protocol",
-      "label": "Client Security Protocol",
-      "description": "Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.",
-      "required": false,
-      "type": "string_enum",
-      "validValues": [
-        "PLAINTEXT",
-        "SSL",
-        "SASL_PLAINTEXT",
-        "SASL_SSL"],
-      "default": "PLAINTEXT",
-      "configurableInWizard": true
-    },
-    {
       "name": "client.sasl.jaas.config",
       "label": "Client SASL JAAS Config",
       "description": "JAAS login context parameters for SASL connections in the format used by JAAS configuration files. JAAS configuration file format is described in Oracle’s documentation (http://docs.oracle.com/javase/8/docs/technotes/guides/security/jgss/tutorials/LoginConfigFile.html). The format for the value is: ‘ (=)*;’",
@@ -532,7 +519,7 @@
       "unit": "milliseconds",
       "configurableInWizard": true
     },
- {
+    {
       "name": "client.sasl.kerberos.ticket.renew.jitter",
       "label": "Client SASL Kerberos Ticket Renew Jitter",
       "description": "Percentage of random jitter added to the renewal time.",
@@ -588,15 +575,15 @@
         "environmentVariables": {
           "HOST": "${host}",
           "PORT": "${port}",
+          "JAVA_HEAP_SIZE_MB": "${java.heap.size.mb}",
           "SSL_PORT": "${ssl.port}",
           "SSL_ENABLED": "${ssl_enabled}",
           "SSL_KEYSTORE_LOCATION": "${ssl_server_keystore_location}",
           "SSL_KEYSTORE_PASSWORD": "${ssl_server_keystore_password}",
           "SSL_TRUSTSTORE_LOCATION": "${ssl_client_truststore_location}",
           "SSL_TRUSTSTORE_PASSWORD": "${ssl_client_truststore_password}",
-          "CLIENT_SECURITY_PROTOCOL" : "${client.security.protocol}",
           "CLIENT_SECURITY_MODE": "${client.security.mode}",
-          "KERBEROS_AUTH_ENABLED": "${kerberos.auth.enable}"
+          "DEBUG": "${debug}"
         }
       },
       "stopRunner" : {
@@ -640,9 +627,9 @@
               "ssl.port",
               "ssl_enabled",
               "ssl_server_keystore_location",
-              "ssl_client_truststore_location",
               "ssl_server_keystore_password",
               "ssl_server_keystore_keypassword",
+              "ssl_client_truststore_location",
               "ssl_client_truststore_password",
               "ssl.client.auth"
             ],
@@ -654,6 +641,10 @@
               {
                 "key" : "#listeners",
                 "value" : "{{LISTENERS}}"
+              },
+              {
+                "key" : "client.security.protocol",
+                "value" : "{{SECURITY_PROTOCOL}}"
               },
               {
                 "key" : "host.name",
@@ -763,5 +754,14 @@
         }
       ]
     }
+  },
+  "rollingRestart": {
+    "nonWorkerSteps": [
+      {
+        "roleName": "KAFKA_REST_SERVER",
+        "bringUpCommands": [ "Start" ],
+        "bringDownCommands": [ "Stop" ]
+      }
+    ]
   }
 }

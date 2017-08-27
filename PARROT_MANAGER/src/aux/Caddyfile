@@ -2,7 +2,7 @@
 #{{HTTPS}}://0.0.0.0:{$SSL_PORT}
 
 tls {{TLS_ONOFF}}
-#tls self_signed
+#tls {{CERT}}
 
 root {$HOME_UI}
 log /var/log/parrot-manager/{$LOG_FILE_NAME}-{$HOST}.log

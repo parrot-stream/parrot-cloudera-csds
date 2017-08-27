@@ -1,7 +1,7 @@
 {
   "name": "PARROT_MANAGER",
   "label": "Parrot Manager",
-  "description": "This is the Parrot distribution of the Landoop Kafka Topics UI, Kafka Connect UI and Schema Registry UI. <span class=\"error\">Before adding this service, ensure that the Parrot parcel of the Parrot Manager is distributed and activated.</span>",
+  "description": "This is the Parrot distribution of the Landoop Kafka Topics UI, Kafka Connect UI and Schema Registry UI. <span class=\"error\">Before adding this service, ensure that the Parrot parcel of the Parrot Manager is <a href=\"../../../parcel/status\">downloaded, distributed and activated</a>.</span>",
   "version": "{{CSD_VERSION}}",
   "compatibility": {
     "generation": 1,
@@ -33,6 +33,10 @@
     {
       "name": "SCHEMA_REGISTRY",
       "required": "true"
+    },
+    {
+      "name": "PARROT_STREAM",
+      "required": "true"
     }
   ],
   "inExpressWizard": true,
@@ -57,7 +61,10 @@
           "MAX_BYTES": "${record.max.bytes}",
           "RECORD_POLL_TIMEOUT": "${record.poll.timeout}",
           "DEBUG_LOGS_ENABLED": "${debug.enabled}",
-          "SSL_ENABLED": "${ssl_enabled}"
+          "SSL_ENABLED": "${ssl_enabled}",
+          "SSL_GENERATE_SELF_SIGNED": "${ssl.generate.self.signed}",
+          "SSL_CERTIFICATE_LOCATION": "${ssl_server_certificate_location}",
+          "SSL_PRIVATEKEY_LOCATION": "${ssl_server_privatekey_location}"
         }
       },
       "stopRunner" : {
@@ -80,17 +87,18 @@
           "instance" : "${host}"
         }
       ],
-      "sslServer": {
-        "keyIdentifier" : "kafka-topics-ui",
+      "sslServer" : {
+        "keystoreFormat" : "pem",
         "enabledConfigName" : "ssl.enabled",
-        "keystoreLocationConfigName" : "ssl.keystore.location",
-        "keystorePasswordConfigName" : "ssl.keystore.password",
-        "keyPasswordOptionality" : "required",
-        "keystoreKeyPasswordConfigName" : "ssl.key.password"
+        "privateKeyLocationConfigName" : "ssl.keystore.location",
+        "privateKeyPasswordConfigName" : "ssl.keystore.password",
+        "privateKeyPasswordCredentialProviderCompatible" : false,
+        "privateKeyPasswordScriptBased" : false,
+        "certificateLocationConfigName" : "ssl.certstore.location"
       },
-      "sslClient": {
-        "truststoreLocationConfigName" : "ssl.truststore.location",
-        "truststorePasswordConfigName" : "ssl.truststore.password"
+      "sslClient" : {
+        "truststoreFormat" : "pem",
+        "truststoreLocationConfigName" : "ssl.truststore.location"
       },
       "logging": {
         "dir": "/var/log/parrot-manager",
@@ -123,6 +131,15 @@
           "required": false,
           "type": "port",
           "default": 8801,
+          "configurableInWizard": true
+        },
+        {
+          "name": "ssl.generate.self.signed",
+          "label": "SSL Generate Self Signed Certificate",
+          "description": "Generate a Self Signed Certificate.",
+          "required": false,
+          "type": "boolean",
+          "default": true,
           "configurableInWizard": true
         },
         {
@@ -189,8 +206,11 @@
           "HOST": "${host}",
           "PORT": "${port}",
           "SSL_PORT": "${ssl.port}",
+          "PROXY_SKIP_VERIFY": "${proxy.skip.verify}",
           "SSL_ENABLED": "${ssl_enabled}",
-          "SSL_PORT": "${ssl.port}"
+          "SSL_GENERATE_SELF_SIGNED": "${ssl.generate.self.signed}",
+          "SSL_CERTIFICATE_LOCATION": "${ssl_server_certificate_location}",
+          "SSL_PRIVATEKEY_LOCATION": "${ssl_server_privatekey_location}"
         }
       },
       "stopRunner" : {
@@ -204,7 +224,13 @@
       },
       "topology" : {
         "minInstances" : "0",
-        "softMinInstances" : "1"
+        "softMinInstances" : "1",
+        "placementRules" : [
+            {
+              "type" : "alwaysWith",
+              "roleType" : "KAFKA_TOPICS_UI"
+            }
+          ]
       },
       "kerberosPrincipals" : [
         {
@@ -213,17 +239,18 @@
           "instance" : "${host}"
         }
       ],
-      "sslServer": {
-        "keyIdentifier" : "kafka-connect-ui",
+      "sslServer" : {
+        "keystoreFormat" : "pem",
         "enabledConfigName" : "ssl.enabled",
-        "keystoreLocationConfigName" : "ssl.keystore.location",
-        "keystorePasswordConfigName" : "ssl.keystore.password",
-        "keyPasswordOptionality" : "required",
-        "keystoreKeyPasswordConfigName" : "ssl.key.password"
+        "privateKeyLocationConfigName" : "ssl.keystore.location",
+        "privateKeyPasswordConfigName" : "ssl.keystore.password",
+        "privateKeyPasswordCredentialProviderCompatible" : false,
+        "privateKeyPasswordScriptBased" : false,
+        "certificateLocationConfigName" : "ssl.certstore.location"
       },
-      "sslClient": {
-        "truststoreLocationConfigName" : "ssl.truststore.location",
-        "truststorePasswordConfigName" : "ssl.truststore.password"
+      "sslClient" : {
+        "truststoreFormat" : "pem",
+        "truststoreLocationConfigName" : "ssl.truststore.location"
       },
       "logging": {
         "dir": "/var/log/parrot-manager",
@@ -234,7 +261,7 @@
       "configWriter": {
           "auxConfigGenerators" : [
             {
-              "filename" : "kafka-connect-ui/Caddyfile",
+              "filename" : "kafka-connect-ui-conf/Caddyfile",
               "sourceFilename" : "aux/Caddyfile"
             }
           ]
@@ -256,6 +283,24 @@
           "required": true,
           "type": "port",
           "default": 8802,
+          "configurableInWizard": true
+        },
+        {
+          "name": "ssl.generate.self.signed",
+          "label": "SSL Generate Self Signed Certificate",
+          "description": "Generate a Self Signed Certificate.",
+          "required": false,
+          "type": "boolean",
+          "default": true,
+          "configurableInWizard": true
+        },
+        {
+          "name": "proxy.skip.verify",
+          "label": "Proxy Skip Verify",
+          "description": "To instruct the proxy to not verify the backend Kafka REST Proxy TLS certificate.",
+          "required": false,
+          "type": "boolean",
+          "default": true,
           "configurableInWizard": true
         }
       ]
@@ -279,7 +324,10 @@
           "PROXY_SKIP_VERIFY": "${proxy.skip.verify}",
           "ALLOW_GLOBAL": "${allow.global}",
           "ALLOW_TRANSITIVE": "${allow.transitive}",
-          "SSL_ENABLED": "${ssl_enabled}"
+          "SSL_ENABLED": "${ssl_enabled}",
+          "SSL_GENERATE_SELF_SIGNED": "${ssl.generate.self.signed}",
+          "SSL_CERTIFICATE_LOCATION": "${ssl_server_certificate_location}",
+          "SSL_PRIVATEKEY_LOCATION": "${ssl_server_privatekey_location}"
         }
       },
       "stopRunner" : {
@@ -302,17 +350,18 @@
           "instance" : "${host}"
         }
       ],
-      "sslServer": {
-        "keyIdentifier" : "schema-registry-ui",
+      "sslServer" : {
+        "keystoreFormat" : "pem",
         "enabledConfigName" : "ssl.enabled",
-        "keystoreLocationConfigName" : "ssl.keystore.location",
-        "keystorePasswordConfigName" : "ssl.keystore.password",
-        "keyPasswordOptionality" : "required",
-        "keystoreKeyPasswordConfigName" : "ssl.key.password"
+        "privateKeyLocationConfigName" : "ssl.keystore.location",
+        "privateKeyPasswordConfigName" : "ssl.keystore.password",
+        "privateKeyPasswordCredentialProviderCompatible" : false,
+        "privateKeyPasswordScriptBased" : false,
+        "certificateLocationConfigName" : "ssl.certstore.location"
       },
-      "sslClient": {
-        "truststoreLocationConfigName" : "ssl.truststore.location",
-        "truststorePasswordConfigName" : "ssl.truststore.password"
+      "sslClient" : {
+        "truststoreFormat" : "pem",
+        "truststoreLocationConfigName" : "ssl.truststore.location"
       },
       "logging": {
         "dir": "/var/log/parrot-manager",
@@ -345,6 +394,15 @@
           "required": false,
           "type": "port",
           "default": 8803,
+          "configurableInWizard": true
+        },
+        {
+          "name": "ssl.generate.self.signed",
+          "label": "SSL Generate Self Signed Certificate",
+          "description": "Generate a Self Signed Certificate.",
+          "required": false,
+          "type": "boolean",
+          "default": true,
           "configurableInWizard": true
         },
         {
@@ -385,5 +443,49 @@
         }
       ]
     }
-  ]
+  ],
+  "gateway" : {
+    "alternatives" : {
+      "name" : "kafka-topics-ui-conf",
+      "linkRoot" : "/etc/kafka-topics-ui",
+      "priority" : 50
+    },
+    "scriptRunner" : {
+      "program" : "scripts/deploy-client-config.sh",
+      "args" : [
+        "deploy"
+        ],
+      "environmentVariables": {
+      }
+    },
+    "configWriter" : {
+      "peerConfigGenerators" : [
+        {
+          "filename" : "kafka-topics-ui-conf/kafka-topics-ui-hostnames",
+          "refreshable" : false,
+          "params" : [ "port", "ssl.port", "ssl_enabled" ],
+          "roleName" : "KAFKA_TOPICS_UI"
+        }
+      ]
+    }
+  },
+  "rollingRestart": {
+    "nonWorkerSteps": [
+      {
+        "roleName": "SCHEMA_REGISTRY_UI",
+        "bringUpCommands": [ "Start" ],
+        "bringDownCommands": [ "Stop" ]
+      },
+      {
+        "roleName": "KAFKA_TOPICS_UI",
+        "bringUpCommands": [ "Start" ],
+        "bringDownCommands": [ "Stop" ]
+      },
+      {
+        "roleName": "KAFKA_CONNECT_UI",
+        "bringUpCommands": [ "Start" ],
+        "bringDownCommands": [ "Stop" ]
+      }
+    ]
+  }
 }
