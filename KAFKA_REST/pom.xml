@@ -11,7 +11,7 @@
   <groupId>io.parrot.csd</groupId>
   <artifactId>KAFKA_REST</artifactId>
   <version>1.0.0</version>
-  <name>The Confluent Kafka Rest CSD</name>
+  <name>The Confluent Kafka REST Proxy CSD</name>
   <packaging>pom</packaging>
 
   <profiles>
