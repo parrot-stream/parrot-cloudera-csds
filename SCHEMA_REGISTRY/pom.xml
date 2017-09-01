@@ -5,12 +5,12 @@
   <parent>
     <groupId>io.parrot</groupId>
     <artifactId>csd</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-alpha</version>
   </parent>
 
   <groupId>io.parrot.csd</groupId>
   <artifactId>SCHEMA_REGISTRY</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.0-alpha</version>
   <name>The Confluent Schema Registry CSD</name>
   <packaging>pom</packaging>
 

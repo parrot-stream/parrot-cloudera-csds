@@ -5,12 +5,12 @@
   <parent>
     <groupId>io.parrot</groupId>
     <artifactId>csd</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-alpha</version>
   </parent>
 
   <groupId>io.parrot.csd</groupId>
   <artifactId>PARROT_MANAGER</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.0-alpha</version>
   <name>The Parrot Manager CSD</name>
   <packaging>jar</packaging>
 
