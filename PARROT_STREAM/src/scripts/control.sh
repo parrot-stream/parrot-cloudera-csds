@@ -66,17 +66,32 @@ echo -e "# SSL_KEYSTORE_PASSWORD:     $SSL_KEYSTORE_PASSWORD"
 echo -e "# SSL_TRUSTSTORE_LOCATION:   $SSL_TRUSTSTORE_LOCATION"
 echo -e "# SSL_TRUSTSTORE_PASSWORD:   $SSL_TRUSTSTORE_PASSWORD"
 echo -e "#-------------------------------------------------------------------------------------"
-echo -e "# KERBEROS_AUTH_ENABLED:     $KERBEROS_AUTH_ENABLED"
 echo -e "# KAFKA_PRINCIPAL:           $KAFKA_PRINCIPAL"
 echo -e "#-------------------------------------------------------------------------------------"
 echo -e "# JAVA_HEAP_SIZE_MB:         $JAVA_HEAP_SIZE_MB"
 echo -e "######################################################################################"
 
-if [[ ${KERBEROS_AUTH_ENABLED} == "true" ]]; then
+# Add Schema Registry URL
+HOSTNAMES=$(extract_peer_hosts "schema-registry")
+SCHEMA_REGISTRY_URL=""
+while read -r host; do
+  SCHEMA_REGISTRY_SSL_ENABLED=$(extract_peer_config_value $HOSTNAME "schema-registry" "ssl.enabled")
+  SCHEMA_REGISTRY_SSL_PORT=$(extract_peer_config_value $HOSTNAME "schema-registry" "ssl.port")
+  SCHEMA_REGISTRY_PORT=$(extract_peer_config_value $HOSTNAME "schema-registry" "port")
+  SCHEMA_REGISTRY_SECURITY_PROTOCOL=$(extract_peer_config_value $HOSTNAME "schema-registry" "kafkastore.security.protocol")
+  if [[ ${SCHEMA_REGISTRY_SSL_ENABLED} == "true" ]]; then
+    SCHEMA_REGISTRY_URL="$SCHEMA_REGISTRY_URL,https://$host:$SCHEMA_REGISTRY_SSL_PORT"
+  else
+    SCHEMA_REGISTRY_URL="$SCHEMA_REGISTRY_URL,http://$host:$SCHEMA_REGISTRY_PORT"
+  fi
+  perl -pi -e "s#{{SECURITY_PROTOCOL}}#${SCHEMA_REGISTRY_SECURITY_PROTOCOL}##" $PARROT_STREAM_CONF_FILE
+done <<< "$HOSTNAMES"
+export SCHEMA_REGISTRY_URL=${SCHEMA_REGISTRY_URL#","}
+
+if [[ (${SCHEMA_REGISTRY_SECURITY_PROTOCOL} == "SASL_PLAINTEXT") || (${SCHEMA_REGISTRY_SECURITY_PROTOCOL} == "SASL_SSL") ]]; then
   # If user has not provided safety valve, replace JAAS_CONFIGS's placeholder
   if [ -z "$JAAS_CONFIGS" ]; then
     KEYTAB_FILE="${CONF_DIR}/parrot_stream.keytab"
- #   SASL_JAAS_CONFIGS="com.sun.security.auth.module.Krb5LoginModule required doNotPrompt=true useKeyTab=true storeKey=true keyTab=\"$KEYTAB_FILE\" principal=\"$KAFKA_PRINCIPAL\";"
     JAAS_CONFIGS="
 KafkaClient {
    com.sun.security.auth.module.Krb5LoginModule required
@@ -89,38 +104,17 @@ KafkaClient {
   fi
   echo "${JAAS_CONFIGS}" > $CONF_DIR/jaas.conf
   KAFKA_OPTS="${KAFKA_OPTS} -Djava.security.auth.login.config=${CONF_DIR}/jaas.conf"
-  if [[ ${SSL_ENABLED} == "true" ]]; then
-    perl -pi -e "s#{{SECURITY_PROTOCOL}}#SASL_SSL#" $PARROT_STREAM_CONF_FILE
-  else
-    perl -pi -e "s#{{SECURITY_PROTOCOL}}#SASL_PLAINTEXT#" $PARROT_STREAM_CONF_FILE
-  fi
-
   if [[ ${DEBUG} == "true" ]]; then
     KAFKA_OPTS="${KAFKA_OPTS} -Dsun.security.krb5.debug=true"
   fi
-else
-  perl -pi -e "s#\#sasl.jaas.config={{SASL_JAAS_CONFIG}}##" $PARROT_STREAM_CONF_FILE
-  if [[ ${SSL_ENABLED} == "true" ]]; then
-    perl -pi -e "s#{{SECURITY_PROTOCOL}}#SSL#" $PARROT_STREAM_CONF_FILE
-  else
-    perl -pi -e "s#{{SECURITY_PROTOCOL}}#PLAINTEXT#" $PARROT_STREAM_CONF_FILE
-  fi
 fi
 
-# Add Schema Registry URL
-HOSTNAMES=$(extract_peer_hosts "schema-registry")
-SCHEMA_REGISTRY_URL=""
-while read -r host; do
-  SCHEMA_REGISTRY_SSL_ENABLED=$(extract_peer_config_value $HOSTNAME "schema-registry" "ssl.enabled")
-  SCHEMA_REGISTRY_SSL_PORT=$(extract_peer_config_value $HOSTNAME "schema-registry" "ssl.port")
-  SCHEMA_REGISTRY_PORT=$(extract_peer_config_value $HOSTNAME "schema-registry" "port")
-  if [[ ${SCHEMA_REGISTRY_SSL_ENABLED} == "true" ]]; then
-    SCHEMA_REGISTRY_URL="$SCHEMA_REGISTRY_URL,https://$host:$SCHEMA_REGISTRY_SSL_PORT"
-  else
-    SCHEMA_REGISTRY_URL="$SCHEMA_REGISTRY_URL,http://$host:$SCHEMA_REGISTRY_PORT"
-  fi
-done <<< "$HOSTNAMES"
-export SCHEMA_REGISTRY_URL=${SCHEMA_REGISTRY_URL#","}
+if [[ ${SSL_ENABLED} == "true" ]]; then
+  SSL_CONFIGS=$(cat parrot-stream-conf/ssl.properties)
+  perl -pi -e "s#\#ssl.configs={{SSL_CONFIGS}}#${SSL_CONFIGS}#" $PARROT_STREAM_CONF_FILE
+else
+  perl -pi -e "s#\#ssl.configs={{SSL_CONFIGS}}##" $PARROT_STREAM_CONF_FILE
+fi
 
 # Replace listeners placeholder with SCHEMA_REGISTRY_URL
 perl -pi -e "s#\{{SCHEMA_REGISTRY_URL}}#${SCHEMA_REGISTRY_URL}#" $PARROT_STREAM_CONF_FILE

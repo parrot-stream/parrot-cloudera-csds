@@ -84,8 +84,9 @@ while read -r host; do
   else
     SCHEMA_REGISTRY_URL="$SCHEMA_REGISTRY_URL,http://$host:$SCHEMA_REGISTRY_PORT"
   fi
-   perl -pi -e "s#{{SECURITY_PROTOCOL}}#${SCHEMA_REGISTRY_SECURITY_PROTOCOL}##" $KAFKAREST_CONF_FILE
+  perl -pi -e "s#{{SECURITY_PROTOCOL}}#${SCHEMA_REGISTRY_SECURITY_PROTOCOL}##" $KAFKAREST_CONF_FILE
 done <<< "$HOSTNAMES"
+export SCHEMA_REGISTRY_URL=${SCHEMA_REGISTRY_URL#","}
 
 if [[ (${SCHEMA_REGISTRY_SECURITY_PROTOCOL} == "SASL_PLAINTEXT") || (${SCHEMA_REGISTRY_SECURITY_PROTOCOL} == "SASL_SSL") ]]; then
   # If user has not provided safety valve, replace JAAS_CONFIGS's placeholder
@@ -112,7 +113,6 @@ Client {
   fi
   echo "${JAAS_CONFIGS}" > $CONF_DIR/jaas.conf
   KAFKAREST_OPTS="${KAFKAREST_OPTS} -Djava.security.auth.login.config=${CONF_DIR}/jaas.conf"
-
   if [[ ${DEBUG} == "true" ]]; then
     KAFKAREST_OPTS="${KAFKAREST_OPTS} -Dsun.security.krb5.debug=true"
   fi
@@ -127,8 +127,6 @@ else
   LISTENERS="http://0.0.0.0:${PORT}"
   perl -pi -e "s#\#ssl.configs={{SSL_CONFIGS}}##" $KAFKAREST_CONF_FILE
 fi
-
-export SCHEMA_REGISTRY_URL=${SCHEMA_REGISTRY_URL#","}
 
 echo -e "# SCHEMA_REGISTRY_URL:         $SCHEMA_REGISTRY_URL"
 echo -e "######################################################################################"

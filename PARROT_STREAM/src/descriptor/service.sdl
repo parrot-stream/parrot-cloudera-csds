@@ -36,7 +36,6 @@
     }
   ],
   "inExpressWizard": true,
-  "kerberos" : "${kerberos.auth.enable}",
   "parameters": [
     {
       "name": "group.id",
@@ -426,14 +425,6 @@
       "configurableInWizard": true
     },
     {
-      "name" : "kerberos.auth.enable",
-      "label" : "Enable Kerberos Authentication",
-      "description" : "Enable Kerberos authentication for this PARROT_STREAM service.",
-      "type" : "boolean",
-      "default" : "false",
-      "configurableInWizard": true
-    },
-    {
       "name": "sasl.kerberos.kinit.cmd",
       "label": "SASL Kerberos Kinit Command Path",
       "description": "Kerberos kinit command path. Default is /usr/bin/kinit",
@@ -497,7 +488,6 @@
           "SSL_KEYSTORE_PASSWORD": "${ssl_server_keystore_password}",
           "SSL_TRUSTSTORE_LOCATION": "${ssl_client_truststore_location}",
           "SSL_TRUSTSTORE_PASSWORD": "${ssl_client_truststore_password}",
-          "KERBEROS_AUTH_ENABLED": "${kerberos.auth.enable}",
           "DEBUG": "${debug}"
         }
       },

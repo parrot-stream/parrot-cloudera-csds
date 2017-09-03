@@ -266,7 +266,6 @@
       "description": "Fully qualified class name of a valid Implementation of the interface RestResourceExtension. This can be used to inject user defined resources like filters. Typically used to add custom capability like logging, security, etc.",
       "required": false,
       "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -302,7 +301,6 @@
       "description": "Used for HTTPS. The algorithm used by the key manager factory for SSL connections. Leave blank to use Jetty’s default.",
       "required": false,
       "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -311,7 +309,6 @@
       "description": "Used for HTTPS. The algorithm used by the trust manager factory for SSL connections. Leave blank to use Jetty’s default.",
       "required": false,
       "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -320,7 +317,6 @@
       "description": "Used for HTTPS. A list of SSL cipher suites. Comma-separated list. Leave blank to use Jetty’s defaults.",
       "required": false,
       "type": "string_array",
-      "default": [],
       "configurableInWizard": true
     },
     {
@@ -329,7 +325,6 @@
       "description": "Used for HTTPS. The endpoint identification algorithm to validate the server hostname using the server certificate. Leave blank to use Jetty’s default.",
       "required": false,
       "type": "string",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -352,7 +347,6 @@
       "description": "The password of the private key in the key store file. This is optional for client.",
       "required": false,
       "type": "password",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -362,7 +356,6 @@
       "required": false,
       "type": "path",
       "pathType": "localDataFile",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -371,7 +364,6 @@
       "description": "The store password for the key store file. This is optional for client and only needed if ssl.keystore.location is configured.",
       "required": false,
       "type": "password",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -381,7 +373,6 @@
       "required": false,
       "type": "path",
       "pathType": "localDataFile",
-      "default": "",
       "configurableInWizard": true
     },
     {
@@ -390,7 +381,6 @@
       "description": "The password for the trust store file.",
       "required": false,
       "type": "password",
-      "default": "",
       "configurableInWizard": true
     },
     {
