@@ -144,24 +144,24 @@ function install {
 function check_command {
   for i in "$@"
   do
-  case $i in
-    build*|install*)
-    COMMAND=$i
-    shift
-    ;;
-    -s*|--service*)
-    set -- "$i"
-    IFS="="; declare -a Array=($*)
-    PARROT_SERVICE_LIST=${Array[1]}
-    shift
-    ;;
-    -d*|--dir*)
-    set -- "$i" 
-    IFS="="; declare -a Array=($*)
-    DIR=${Array[1]}
-    shift
-    ;;
-  esac
+    case $i in
+      build*|install*)
+        COMMAND=$i
+        shift
+        ;;
+      -s*|--service*)
+        set -- "$i"
+        IFS="="; declare -a Array=($*)
+        PARROT_SERVICE_LIST=${Array[1]}
+        shift
+        ;;
+      -d*|--dir*)
+        set -- "$i" 
+        IFS="="; declare -a Array=($*)
+        DIR=${Array[1]}
+        shift
+        ;;
+    esac
   done
 
   if [[ (-z "$COMMAND") ]]; then
