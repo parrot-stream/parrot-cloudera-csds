@@ -5,12 +5,12 @@
   <parent>
     <groupId>io.parrot</groupId>
     <artifactId>csd</artifactId>
-    <version>1.0.0-alpha</version>
+    <version>1.0.0-alpha.1</version>
   </parent>
 
   <groupId>io.parrot.csd</groupId>
   <artifactId>KAFKA_REST</artifactId>
-  <version>1.0.0-alpha</version>
+  <version>1.0.0-alpha.1</version>
   <name>The Confluent Kafka REST Proxy CSD</name>
   <packaging>pom</packaging>
 
