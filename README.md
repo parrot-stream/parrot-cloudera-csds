@@ -13,12 +13,7 @@ These includes:
 
 #### **Prerequisites**
 
-- Git
-- Java 7
 - Maven 3.2.x
-- Python 2.7.x
-- Npm 4
-- Bower
 
 #### **Command**
 
