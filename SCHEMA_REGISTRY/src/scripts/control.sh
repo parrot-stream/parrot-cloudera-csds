@@ -40,9 +40,7 @@ echo -e "# SSL_PORT:                     $SSL_PORT"
 echo -e "# SSL_KEYSTORE_LOCATION:        $SSL_KEYSTORE_LOCATION"
 echo -e "# SSL_TRUSTSTORE_LOCATION:      $SSL_TRUSTSTORE_LOCATION"
 echo -e "#-------------------------------------------------------------------------------------"
-echo -e "# KERBEROS_AUTH_ENABLED:        $KERBEROS_AUTH_ENABLED"
 echo -e "# KAFKASTORE_SECURITY_PROTOCOL: $KAFKASTORE_SECURITY_PROTOCOL"
-echo -e "# KAFKA_PRINCIPAL:              $KAFKA_PRINCIPAL"
 echo -e "######################################################################################"
 
 if [[ -z ${ZK_PRINCIPAL_NAME} ]]; then

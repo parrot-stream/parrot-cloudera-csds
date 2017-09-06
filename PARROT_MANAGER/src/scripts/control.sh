@@ -95,8 +95,6 @@ elif [[ "$2" == "kafka-connect-ui" ]]; then
   else
     export KAFKA_TOPICS_UI="http://$HOSTNAME:$KAFKA_TOPICS_UI_REST_PORT"
   fi
-$CONF_DIR
-
 elif [[ "$2" == "schema-registry-ui" ]]; then
   HOSTNAMES=$(extract_peer_hosts "schema-registry")
   HOSTNAME=(${HOSTNAMES[@]})

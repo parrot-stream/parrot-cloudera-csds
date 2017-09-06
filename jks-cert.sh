@@ -1,9 +1,10 @@
 #!/bin/bash
 
 function usage {
-  echo -e "#################################################################################################################################################"
+  echo -e "##################################################################################################################################"
   echo -e "  Usage:"
-  echo -e "             ./jks-cert.sh COMMAND [OPTIONS]"
+  echo -e ""
+  echo -e "     ./jks-cert.sh COMMAND [OPTIONS]"
   echo -e ""
   echo -e "  Example:"
   echo -e ""
@@ -13,22 +14,22 @@ function usage {
   echo -e ""
   echo -e "  Commands:"
   echo -e ""
-  echo -e "     create          		Creates a new Self Signed Certificate"
-  echo -e "     delete          		Deletes an existing Self Signed Certificate"
-  echo -e "     list          		        List Certificates in the Keystore"
+  echo -e "     create                 Creates a new Self Signed Certificate"
+  echo -e "     delete                 Deletes an existing Self Signed Certificate"
+  echo -e "     list          	       List Certificates in the Keystore"
   echo -e ""
   echo -e "  Options:"
   echo -e ""
-  echo -e "     -a, --alias     		Certificate alias name"
-  echo -e "     -h, --hostname			FQDN of the hostname of the Certificate"
-  echo -e "     -sd, --security-dir		Base dir where jks (keystore) and x509 (certificates) dir are created (es. /opt/cloudera/security)"
+  echo -e "     -a, --alias            Certificate alias name"
+  echo -e "     -h, --hostname	       FQDN of the hostname of the Certificate"
+  echo -e "     -sd, --security-dir    Base dir where jks (keystore) and x509 (certificates) dir are created (es. /opt/cloudera/security)"
   echo -e ""
-  echo -e "----------------------------------------------------------------------------------------------------------------------------------------------"
+  echo -e "-------------------------------------------------------------------------------------------------------------------------------"
   echo -e "  COMMAND:  $COMMAND"
   echo -e "       -a   $ALIAS"
   echo -e "       -h   $HOSTNAME"
   echo -e "       -sd  $SECURITY_BASE_DIR"
-echo -e "#################################################################################################################################################"
+echo -e "##################################################################################################################################"
 }
 
 function check_command {
@@ -60,18 +61,22 @@ function check_command {
   esac
   done
 
-  echo -e "#################################################################################################################################################"
+  echo -e "##################################################################################################################################"
   echo -e "  COMMAND:  $COMMAND"
   echo -e "       -a   $ALIAS"
   echo -e "       -h   $HOSTNAME"
   echo -e "       -sd  $SECURITY_BASE_DIR"
-  echo -e "#################################################################################################################################################"
+  echo -e " JAVA_HOME  $JAVA_HOME"
+  echo -e "##################################################################################################################################"
 
   if [[ (-z "$COMMAND") ]]; then
     usage
     exit 0
   fi
-
+  if [[ (-z "$JAVA_HOME") ]]; then
+    echo "JAVA_HOME is missing!"
+    exit 0
+  fi
 }
 
 check_command "$@"
@@ -79,16 +84,16 @@ check_command "$@"
 if [[ "$COMMAND" == "create" ]]; then
   mkdir -p $SECURITY_BASE_DIR/jks
   mkdir -p $SECURITY_BASE_DIR/x509
-  keytool -genkeypair -keystore $SECURITY_BASE_DIR/jks/$ALIAS-keystore.jks -keyalg RSA -keysize 2048 -alias $ALIAS -dname \
+  $JAVA_HOME/bin/keytool -genkeypair -keystore $SECURITY_BASE_DIR/jks/$ALIAS-keystore.jks -keyalg RSA -keysize 2048 -alias $ALIAS -dname \
 "CN=$HOSTNAME,OU=Security,O=Parrot,L=Rome,ST=Italy,C=IT" -storepass password -keypass password -validity 3650
 
   if [ ! -f "$JAVA_HOME/jre/lib/security/jssecacerts" ]; then
     cp -f $JAVA_HOME/jre/lib/security/cacerts $JAVA_HOME/jre/lib/security/jssecacerts
   fi
 
-  keytool -export -alias $ALIAS -keystore $SECURITY_BASE_DIR/jks/$ALIAS-keystore.jks -rfc -file $SECURITY_BASE_DIR/x509/$HOSTNAME.pem
-  keytool -import -alias $ALIAS -file $SECURITY_BASE_DIR/x509/$HOSTNAME.pem -keystore $JAVA_HOME/jre/lib/security/jssecacerts -storepass changeit -noprompt
-  keytool -importkeystore -srckeystore $SECURITY_BASE_DIR/jks/$ALIAS-keystore.jks -srcstorepass password -srckeypass password -destkeystore /tmp/$ALIAS-keystore.p12 -deststoretype PKCS12 -srcalias $ALIAS -deststorepass password -destkeypass password
+  $JAVA_HOME/bin/keytool -export -alias $ALIAS -keystore $SECURITY_BASE_DIR/jks/$ALIAS-keystore.jks -rfc -file $SECURITY_BASE_DIR/x509/$HOSTNAME.pem
+  $JAVA_HOME/bin/keytool -import -alias $ALIAS -file $SECURITY_BASE_DIR/x509/$HOSTNAME.pem -keystore $JAVA_HOME/jre/lib/security/jssecacerts -storepass changeit -noprompt
+  $JAVA_HOME/bin/keytool -importkeystore -srckeystore $SECURITY_BASE_DIR/jks/$ALIAS-keystore.jks -srcstorepass password -srckeypass password -destkeystore /tmp/$ALIAS-keystore.p12 -deststoretype PKCS12 -srcalias $ALIAS -deststorepass password -destkeypass password
   openssl pkcs12 -in /tmp/$ALIAS-keystore.p12 -passin pass:password -nocerts -out $SECURITY_BASE_DIR/x509/$HOSTNAME.key -passout pass:password
    
   chown -R cloudera-scm:cloudera-scm $SECURITY_BASE_DIR
@@ -103,11 +108,11 @@ fi
 if [[ "$COMMAND" == "delete" ]]; then
   rm -rf $SECURITY_BASE_DIR
   rm -f $SECURITY_BASE_DIR/x509/$HOSTNAME.key $SECURITY_BASE_DIR/x509/$HOSTNAME.pem
-  keytool -delete -alias $ALIAS -keystore $SECURITY_BASE_DIR/jks/$ALIAS-keystore.jks
-  keytool -delete -alias $ALIAS -keystore $JAVA_HOME/jre/lib/security/jssecacerts
+  $JAVA_HOME/bin/keytool -delete -alias $ALIAS -keystore $SECURITY_BASE_DIR/jks/$ALIAS-keystore.jks
+  $JAVA_HOME/bin/keytool -delete -alias $ALIAS -keystore $JAVA_HOME/jre/lib/security/jssecacerts
 fi
 
 if [[ "$COMMAND" == "list" ]]; then
-  sudo keytool -list -keystore $SECURITY_BASE_DIR/jks/$ALIAS-keystore.jks
-  sudo keytool -list -keystore $JAVA_HOME/jre/lib/security/jssecacerts
+  $JAVA_HOME/bin/keytool -list -keystore $SECURITY_BASE_DIR/jks/$ALIAS-keystore.jks
+  $JAVA_HOME/bin/keytool -list -keystore $JAVA_HOME/jre/lib/security/jssecacerts
 fi
