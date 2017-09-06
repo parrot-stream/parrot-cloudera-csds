@@ -31,7 +31,7 @@ PARROT_MANAGER_VERSION=$(grep "^version=" $PARROT_MANAGER_HOME/cloudera/cdh_vers
 echo "Parrot Manager version found: ${PARROT_MANAGER_VERSION}"
 
 echo -e "######################################################################################"
-echo -e "# PARROT DISTRIBUTION - PARROT MANAGER"
+echo -e "# PARROT DISTRIBUTION - PARROT MANAGER ($2)"
 echo -e "#-------------------------------------------------------------------------------------"
 echo -e "# COMMAND:                         $1"
 echo -e "# SERVICE:                         $2"
